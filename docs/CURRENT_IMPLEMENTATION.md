@@ -51,6 +51,12 @@ Cấu trúc thư mục chính và vai trò của từng phần:
 ├── types/                      # TypeScript Definitions
 │   └── supabase.ts             # Database Schema Types (Generated)
 └── docs/                       # Tài liệu dự án
+    ├── database/               # Database Scripts (SETUP_SUPABASE.sql)
+    ├── deployment/             # Deployment Guides
+    ├── system/                 # System Architecture
+    ├── ARCHITECTURE.md         # Architecture Overview
+    ├── STATE_MANAGEMENT_GUIDE.md # State Management Guide
+    └── ...                     # Other Guides
 ```
 
 ## 3. Trạng thái Triển khai Chi tiết
@@ -83,10 +89,11 @@ Cấu trúc thư mục chính và vai trò của từng phần:
 |------------|----------|---------|------------|
 | **Server State** | React Query | Custom Hooks | ✅ Ổn định. Tách biệt logic fetch data khỏi UI. |
 | **UI State** | Zustand | Factory + Context | ✅ Ổn định. Tránh lỗi SSR hydration mismatch. |
+| **URL State** | nuqs | Adapters + Hooks | ✅ Ổn định. Quản lý search params type-safe. |
 
 ### 3.5. Database Schema
 - **Tables**: `persons`, `relationships`
-- **Migrations**: Script `SETUP_SUPABASE.sql` đã được cập nhật để chạy idempotent (kiểm tra tồn tại trước khi tạo).
+- **Migrations**: Script `docs/database/SETUP_SUPABASE.sql` đã được cập nhật để chạy idempotent (kiểm tra tồn tại trước khi tạo).
 - **Realtime**: Đã bật cho cả 2 bảng.
 
 ## 4. Các Vấn đề & Công việc Tồn đọng (Issues & Backlog)

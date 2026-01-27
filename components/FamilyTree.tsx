@@ -107,6 +107,10 @@ export function FamilyTree({ userId, persons }: FamilyTreeProps) {
   
   // Update nodes when layoutedNodes changes (e.g. data fetch)
   React.useEffect(() => {
+    console.log('Layout effect triggered', { 
+      nodesCount: layoutedNodes.length, 
+      edgesCount: layoutedEdges.length 
+    })
     setNodes(layoutedNodes)
     setEdges(layoutedEdges)
   }, [layoutedNodes, layoutedEdges, setNodes, setEdges])

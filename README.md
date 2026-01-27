@@ -50,6 +50,7 @@ A modern Family Tree application built with Next.js 15, Supabase, React Query, a
 - `components/FamilyTree.tsx`: Visualization component.
 - `lib/supabase`: Database and realtime logic.
 - `docs/`: Detailed documentation and setup guides.
+  - [Release Process & Deployment](docs/deployment/RELEASE_PROCESS.md)
 
 ## License
 

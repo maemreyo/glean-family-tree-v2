@@ -15,15 +15,36 @@ create table if not exists persons (
   name text not null,
   date_of_birth date,
   gender text check (gender in ('male', 'female', 'other')),
-  user_id uuid references auth.users(id) on delete cascade not null
+  user_id uuid references auth.users(id) on delete cascade not null,
+  family_id uuid not null default gen_random_uuid()
 );
 
 -- Create index for better query performance
 create index if not exists persons_user_id_idx on persons(user_id);
+create index if not exists persons_family_id_idx on persons(family_id);
 create index if not exists persons_created_at_idx on persons(created_at desc);
 
 -- =====================================================
--- 2. CREATE UPDATED_AT TRIGGER
+-- 2. CREATE RELATIONSHIPS TABLE
+-- =====================================================
+
+create table if not exists relationships (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  from_person_id uuid references persons(id) on delete cascade not null,
+  to_person_id uuid references persons(id) on delete cascade not null,
+  type text not null check (type in ('parent', 'spouse', 'child')),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  constraint relationships_unique unique (from_person_id, to_person_id, type)
+);
+
+create index if not exists relationships_user_id_idx on relationships(user_id);
+create index if not exists relationships_from_person_id_idx on relationships(from_person_id);
+create index if not exists relationships_to_person_id_idx on relationships(to_person_id);
+
+-- =====================================================
+-- 3. CREATE UPDATED_AT TRIGGER
 -- =====================================================
 
 create or replace function update_updated_at_column()
@@ -39,14 +60,20 @@ create trigger update_persons_updated_at
   for each row
   execute function update_updated_at_column();
 
+create trigger update_relationships_updated_at
+  before update on relationships
+  for each row
+  execute function update_updated_at_column();
+
 -- =====================================================
--- 3. ENABLE ROW LEVEL SECURITY (RLS)
+-- 4. ENABLE ROW LEVEL SECURITY (RLS)
 -- =====================================================
 
 alter table persons enable row level security;
+alter table relationships enable row level security;
 
 -- =====================================================
--- 4. CREATE RLS POLICIES
+-- 5. CREATE RLS POLICIES
 -- =====================================================
 
 -- Drop existing policies nếu có
@@ -55,96 +82,71 @@ drop policy if exists "Users can insert own persons" on persons;
 drop policy if exists "Users can update own persons" on persons;
 drop policy if exists "Users can delete own persons" on persons;
 
--- Policy: Users can view their own persons
+drop policy if exists "Users can view own relationships" on relationships;
+drop policy if exists "Users can insert own relationships" on relationships;
+drop policy if exists "Users can update own relationships" on relationships;
+drop policy if exists "Users can delete own relationships" on relationships;
+
+-- PERSONS Policies
 create policy "Users can view own persons"
-  on persons
-  for select
+  on persons for select
   using (auth.uid() = user_id);
 
--- Policy: Users can insert their own persons
 create policy "Users can insert own persons"
-  on persons
-  for insert
+  on persons for insert
   with check (auth.uid() = user_id);
 
--- Policy: Users can update their own persons
 create policy "Users can update own persons"
-  on persons
-  for update
+  on persons for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Policy: Users can delete their own persons
 create policy "Users can delete own persons"
-  on persons
-  for delete
+  on persons for delete
+  using (auth.uid() = user_id);
+
+-- RELATIONSHIPS Policies
+create policy "Users can view own relationships"
+  on relationships for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own relationships"
+  on relationships for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own relationships"
+  on relationships for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "Users can delete own relationships"
+  on relationships for delete
   using (auth.uid() = user_id);
 
 -- =====================================================
--- 5. ENABLE REALTIME
+-- 6. ENABLE REALTIME
 -- =====================================================
 
--- Enable Realtime for persons table
+-- Enable Realtime for persons and relationships tables
 alter publication supabase_realtime add table persons;
-
--- =====================================================
--- 6. CREATE SAMPLE DATA (OPTIONAL - for testing)
--- =====================================================
-
--- Uncomment để tạo sample data
--- Lưu ý: Replace 'your-user-id-here' với actual user ID
-/*
-insert into persons (name, date_of_birth, gender, user_id) values
-  ('John Doe', '1990-01-15', 'male', 'your-user-id-here'),
-  ('Jane Smith', '1985-05-20', 'female', 'your-user-id-here'),
-  ('Alex Johnson', '1995-09-10', 'other', 'your-user-id-here');
-*/
+alter publication supabase_realtime add table relationships;
 
 -- =====================================================
 -- 7. VERIFY SETUP
 -- =====================================================
 
--- Check table exists
-select 
-  table_name, 
-  table_type 
+-- Check tables exist
+select table_name, table_type 
 from information_schema.tables 
 where table_schema = 'public' 
-and table_name = 'persons';
+and table_name in ('persons', 'relationships');
 
 -- Check RLS is enabled
-select 
-  tablename, 
-  rowsecurity 
+select tablename, rowsecurity 
 from pg_tables 
 where schemaname = 'public' 
-and tablename = 'persons';
-
--- Check policies exist
-select 
-  policyname, 
-  cmd, 
-  roles 
-from pg_policies 
-where schemaname = 'public' 
-and tablename = 'persons';
-
--- Check indexes
-select 
-  indexname, 
-  indexdef 
-from pg_indexes 
-where schemaname = 'public' 
-and tablename = 'persons';
+and tablename in ('persons', 'relationships');
 
 -- =====================================================
 -- SETUP COMPLETE! ✅
 -- =====================================================
-
--- Next steps:
--- 1. Verify all checks passed
--- 2. Test inserting a row in Supabase Table Editor
--- 3. Configure Auth settings in Supabase Dashboard
--- 4. Add redirect URLs: http://localhost:3000/auth/callback
--- 5. Enable email provider hoặc OAuth providers
--- 6. Start coding! 🚀

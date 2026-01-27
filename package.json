@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A modern Family Tree application built with Next.js 15, Supabase, React Query, and ReactFlow.",
   "author": "zaob.ogn <zaob.ogn@gmail.com>",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "repository": {
     "type": "git",
     "url": "https://github.com/maemreyo/glean-family-tree-v2.git"

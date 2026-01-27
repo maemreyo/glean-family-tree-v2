@@ -4,6 +4,7 @@
 import { usePersons, useCreatePerson, useDeletePerson } from '@/lib/supabase/queries'
 import { useRealtimeMultiple } from '@/lib/supabase/realtime'
 import { useUIStore } from '@/providers/ui-store-provider'
+import { useDashboardParams } from '@/lib/hooks/use-dashboard-params'
 import { useState } from 'react'
 import type { Database } from '@/types/database.types'
 import { FamilyTree } from '@/components/FamilyTree'
@@ -64,6 +65,16 @@ export function DashboardClient({
   // Realtime Subscriptions
   // ============================================
   useRealtimeMultiple(REALTIME_TABLES, userId)
+
+  // ============================================
+  // URL State (Nuqs)
+  // ============================================
+  const { searchQuery, setSearchQuery, activeTab, setActiveTab } = useDashboardParams()
+
+  // Filter persons based on search query
+  const filteredPersons = persons.filter(person => 
+    person.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   // ============================================
   // Local Form State
@@ -171,11 +182,78 @@ export function DashboardClient({
         {/* Content Body */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6 dark:bg-gray-900">
           <div className="mx-auto max-w-6xl">
-            {/* Family Tree Visualization */}
-            <div className="mb-8 h-[500px] w-full">
-               <h3 className="mb-4 text-lg font-bold">Family Tree Visualization</h3>
-               <FamilyTree userId={userId} persons={persons} />
+            {/* Controls */}
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex gap-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+                <button
+                  onClick={() => setActiveTab('tree')}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    activeTab === 'tree'
+                      ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  }`}
+                >
+                  Tree View
+                </button>
+                <button
+                  onClick={() => setActiveTab('list')}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    activeTab === 'list'
+                      ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  }`}
+                >
+                  List View
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search persons..."
+                  className="w-full rounded-md border border-gray-300 px-4 py-2 pl-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
+                />
+                <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+              </div>
             </div>
+
+            {/* Content View */}
+            {activeTab === 'tree' ? (
+              <div className="mb-8 h-[500px] w-full">
+                 <h3 className="mb-4 text-lg font-bold">Family Tree Visualization</h3>
+                 <FamilyTree userId={userId} persons={filteredPersons} />
+              </div>
+            ) : (
+              <div className="mb-8 w-full">
+                <h3 className="mb-4 text-lg font-bold">Persons List ({filteredPersons.length})</h3>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredPersons.map((person) => (
+                    <div 
+                      key={person.id} 
+                      className="flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+                    >
+                      <div>
+                        <p className="font-semibold">{person.name}</p>
+                        <p className="text-xs text-gray-500">ID: {person.id.slice(0, 8)}...</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeletePerson(person.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                  {filteredPersons.length === 0 && (
+                    <p className="col-span-full py-8 text-center text-gray-500">
+                      No persons found matching "{searchQuery}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Create Person Form */}
             <div className="mb-8 rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">

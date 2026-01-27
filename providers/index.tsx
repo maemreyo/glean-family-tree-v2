@@ -4,13 +4,15 @@
 import { type ReactNode } from 'react'
 import { ReactQueryProvider } from './react-query-provider'
 import { UIStoreProvider } from './ui-store-provider'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 /**
  * Combined Providers - Wrap toàn bộ app
  * 
  * Order matters:
- * 1. React Query Provider (cần cho Supabase queries)
- * 2. UI Store Provider (có thể depend on queries)
+ * 1. NuqsAdapter (URL state)
+ * 2. React Query Provider (cần cho Supabase queries)
+ * 3. UI Store Provider (có thể depend on queries)
  * 
  * Usage:
  * ```tsx
@@ -20,8 +22,10 @@ import { UIStoreProvider } from './ui-store-provider'
  */
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ReactQueryProvider>
-      <UIStoreProvider>{children}</UIStoreProvider>
-    </ReactQueryProvider>
+    <NuqsAdapter>
+      <ReactQueryProvider>
+        <UIStoreProvider>{children}</UIStoreProvider>
+      </ReactQueryProvider>
+    </NuqsAdapter>
   )
 }

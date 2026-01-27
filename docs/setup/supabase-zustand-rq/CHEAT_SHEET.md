@@ -93,6 +93,33 @@ const updatePerson = useMutation({
 })
 ```
 
+## 🔗 Nuqs Patterns (URL State)
+
+### Basic Usage
+
+```tsx
+import { useQueryState, parseAsString } from 'nuqs'
+
+// Simple string
+const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
+
+// With options
+const [tab, setTab] = useQueryState('tab', parseAsString.withDefault('tree').withOptions({
+  history: 'push', // or 'replace'
+  shallow: true, // Client-side only update
+}))
+```
+
+### Custom Hook Pattern
+
+```tsx
+// lib/hooks/use-dashboard-params.ts
+export function useDashboardParams() {
+  const [q, setQ] = useQueryState('q', parseAsString.withDefault(''))
+  return { q, setQ }
+}
+```
+
 ## 🎨 Zustand Patterns
 
 ### Store Definition

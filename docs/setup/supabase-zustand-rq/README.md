@@ -21,7 +21,7 @@
 | **Server Data** | React Query | Cache, refetch, optimistic updates |
 | **UI State** | Zustand | Simple, no boilerplate |
 | **Form State** | Local useState | Keep it simple |
-| **URL State** | nuqs (optional) | Type-safe search params |
+| **URL State** | nuqs | Type-safe search params |
 
 ## 📁 Project Structure
 

@@ -12,12 +12,17 @@ import ReactFlow, {
   Edge,
   Node,
   Position,
+  NodeDragHandler,
+  Panel,
+  MarkerType,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import dagre from 'dagre'
-import { usePersons, useRelationships } from '@/lib/supabase/queries'
+import { usePersons, useRelationships, useUpdatePerson } from '@/lib/supabase/queries'
 import { useUIStore } from '@/providers/ui-store-provider'
 import type { Database } from '@/types/database.types'
+import { Button } from '@/components/ui/button'
+import { RotateCw } from 'lucide-react'
 
 type Person = Database['public']['Tables']['persons']['Row']
 type Relationship = Database['public']['Tables']['relationships']['Row']
@@ -43,8 +48,12 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight })
   })
 
+  // Filter out spouse edges for layout to avoid hierarchical enforcement
   edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target)
+    const isSpouse = edge.data?.relationshipType === 'spouse'
+    if (!isSpouse) {
+      dagreGraph.setEdge(edge.source, edge.target)
+    }
   })
 
   dagre.layout(dagreGraph)
@@ -69,33 +78,86 @@ export function FamilyTree({ userId, persons }: FamilyTreeProps) {
   const { data: relationshipsData } = useRelationships(userId)
   const relationships = relationshipsData || EMPTY_RELATIONSHIPS
   const openPersonModal = useUIStore((state) => state.openPersonModal)
+  const { mutate: updatePerson } = useUpdatePerson()
+
+  const hasSavedPositions = useMemo(() => {
+    return persons.some(
+      (p) =>
+        (p.position_x !== null && p.position_x !== 0) ||
+        (p.position_y !== null && p.position_y !== 0)
+    )
+  }, [persons])
 
   const initialNodes: Node[] = useMemo(() => {
     return persons.map((person) => ({
       id: person.id,
       data: { label: person.name },
-      position: { x: 0, y: 0 },
+      position: { x: person.position_x || 0, y: person.position_y || 0 },
       type: 'default',
     }))
   }, [persons])
 
   const initialEdges: Edge[] = useMemo(() => {
-    return relationships.map((rel) => ({
-      id: rel.id,
-      source: rel.parent_id,
-      target: rel.child_id,
-      type: 'smoothstep',
-      animated: true,
-    }))
+    return relationships.map((rel) => {
+      const isSpouse = rel.relationship_type === 'spouse'
+      return {
+        id: rel.id,
+        source: rel.parent_id,
+        target: rel.child_id,
+        type: isSpouse ? 'straight' : 'smoothstep',
+        animated: !isSpouse,
+        style: isSpouse ? { stroke: '#ec4899', strokeWidth: 2 } : undefined,
+        markerEnd: isSpouse ? undefined : { type: MarkerType.ArrowClosed },
+        data: { relationshipType: rel.relationship_type },
+      }
+    })
   }, [relationships])
 
-  const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(
-    () => getLayoutedElements(initialNodes, initialEdges),
-    [initialNodes, initialEdges]
-  )
+  const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
+    if (hasSavedPositions) {
+      return {
+        nodes: initialNodes.map((node) => ({
+          ...node,
+          targetPosition: Position.Top,
+          sourcePosition: Position.Bottom,
+        })),
+        edges: initialEdges,
+      }
+    }
+    return getLayoutedElements(initialNodes, initialEdges)
+  }, [initialNodes, initialEdges, hasSavedPositions])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges)
+
+  const onNodeDragStop: NodeDragHandler = useCallback(
+    (_, node) => {
+      updatePerson({
+        id: node.id,
+        updates: {
+          position_x: node.position.x,
+          position_y: node.position.y,
+        },
+      })
+    },
+    [updatePerson]
+  )
+
+  const handleAutoLayout = () => {
+    const { nodes: newNodes } = getLayoutedElements(nodes, edges)
+    setNodes(newNodes)
+
+    // Save new positions
+    newNodes.forEach((node) => {
+      updatePerson({
+        id: node.id,
+        updates: {
+          position_x: node.position.x,
+          position_y: node.position.y,
+        },
+      })
+    })
+  }
 
   const onConnect = useCallback(
     (params: Connection) =>
@@ -133,6 +195,12 @@ export function FamilyTree({ userId, persons }: FamilyTreeProps) {
         <Controls />
         <MiniMap />
         <Background gap={12} size={1} />
+        <Panel position="top-right">
+          <Button onClick={handleAutoLayout} variant="outline" size="sm" className="gap-2">
+            <RotateCw className="h-4 w-4" />
+            Auto Layout
+          </Button>
+        </Panel>
       </ReactFlow>
     </div>
   )

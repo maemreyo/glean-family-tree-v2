@@ -57,27 +57,19 @@ This document outlines the strategic development plan for **Glean Family Tree V2
 **Estimated Duration**: 1-2 weeks
 **Priority**: HIGH
 
-### 2.1 Persist Node Positions (Fix "Lost Connections" Perception)
-- **Problem**: Dagre auto-layout recalculates positions on every add, causing nodes to jump.
-- **Solution**: Save X/Y coordinates to DB.
-- **Tasks**:
-  - [ ] Add `position_x`, `position_y` columns to `persons` table.
-  - [ ] Update `usePersons` to save position on drag end.
-  - [ ] Implement "Auto Layout" button (manual trigger) vs "Save Layout".
-- **Success Criteria**: Nodes stay in place after adding a new person.
-
-### 2.2 Complex Relationships (Spouses)
-- **Objective**: Support husband/wife/partner relationships visually.
-- **Tasks**:
-  - [ ] Add `relationship_type` ('parent', 'spouse') to database.
-  - [ ] Update Graph logic to render spouse edges (distinct style).
-  - [ ] Handle bidirectional updates (A is spouse of B -> B is spouse of A).
+- [x] **Database Schema Update** (Completed)
+  - [x] Add `relationship_type` to `relationships` table (parent/child, spouse).
+  - [x] Add `position_x`, `position_y` to `persons` table for custom layout persistence.
+- [x] **UI for Complex Relationships** (Completed)
+  - [x] Update `RelationshipModal` to support "Spouse" type.
+  - [x] Dynamic form fields based on relationship type.
+  - [x] Display spouse in Person Detail Sheet.
 
 ### 2.3 Logic Validation
 - **Objective**: Prevent impossible family trees.
 - **Tasks**:
-  - [ ] Implement **Cycle Detection** (A -> B -> A).
-  - [ ] Validate birth dates (Parent must be older than Child).
+  - [x] Implement **Cycle Detection** (A -> B -> A).
+  - [x] Validate birth dates (Parent must be older than Child).
 
 ---
 

@@ -80,12 +80,33 @@ export function RelationshipModal({
   })
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const validator = new RelationshipValidator(relationships, persons)
+
     if (values.type === 'spouse') {
-      showToast('Spouse relationships are not yet supported by the database.', 'error')
+      const validation = validator.validateSpouse(values.parentId, values.childId)
+      
+      if (!validation.valid) {
+        showToast(validation.error || 'Invalid spouse relationship', 'error')
+        return
+      }
+
+      try {
+        await createRelationship.mutateAsync({
+          parent_id: values.parentId,
+          child_id: values.childId,
+          user_id: userId,
+          relationship_type: 'spouse',
+        })
+        showToast('Spouse relationship created successfully!', 'success')
+        form.reset()
+        onClose()
+      } catch (error) {
+        console.error('Error creating spouse relationship:', error)
+        showToast('Failed to create spouse relationship', 'error')
+      }
       return
     }
 
-    const validator = new RelationshipValidator(relationships)
     const validation = validator.validateParentChild(values.parentId, values.childId)
 
     if (!validation.valid) {
@@ -98,6 +119,7 @@ export function RelationshipModal({
         parent_id: values.parentId,
         child_id: values.childId,
         user_id: userId,
+        relationship_type: 'parent',
       })
       showToast('Relationship created successfully!', 'success')
       form.reset()
@@ -132,144 +154,133 @@ export function RelationshipModal({
         }}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="parent-child">Parent-Child</TabsTrigger>
-            <TabsTrigger value="spouse">Spouse (Coming Soon)</TabsTrigger>
+            <TabsTrigger value="spouse">Spouse</TabsTrigger>
           </TabsList>
           
           <div className="py-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {activeTab === 'parent-child' && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="parentId"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Parent</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value
-                                    ? persons.find(
-                                        (person) => person.id === field.value
-                                      )?.name
-                                    : "Select parent"}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0">
-                              <Command>
-                                <CommandInput placeholder="Search person..." />
-                                <CommandList>
-                                  <CommandEmpty>No person found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {persons.map((person) => (
-                                      <CommandItem
-                                        value={person.name}
-                                        key={person.id}
-                                        onSelect={() => {
-                                          form.setValue("parentId", person.id)
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            person.id === field.value
-                                              ? "opacity-100"
-                                              : "opacity-0"
-                                          )}
-                                        />
-                                        {person.name}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="parentId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>{activeTab === 'spouse' ? 'Partner 1' : 'Parent'}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? persons.find(
+                                    (person) => person.id === field.value
+                                  )?.name
+                                : (activeTab === 'spouse' ? "Select partner 1" : "Select parent")}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search person..." />
+                            <CommandList>
+                              <CommandEmpty>No person found.</CommandEmpty>
+                              <CommandGroup>
+                                {persons.map((person) => (
+                                  <CommandItem
+                                    value={person.name}
+                                    key={person.id}
+                                    onSelect={() => {
+                                      form.setValue("parentId", person.id)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        person.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {person.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="childId"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Child</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value
-                                    ? persons.find(
-                                        (person) => person.id === field.value
-                                      )?.name
-                                    : "Select child"}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0">
-                              <Command>
-                                <CommandInput placeholder="Search person..." />
-                                <CommandList>
-                                  <CommandEmpty>No person found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {persons.map((person) => (
-                                      <CommandItem
-                                        value={person.name}
-                                        key={person.id}
-                                        onSelect={() => {
-                                          form.setValue("childId", person.id)
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            person.id === field.value
-                                              ? "opacity-100"
-                                              : "opacity-0"
-                                          )}
-                                        />
-                                        {person.name}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
-
-                {activeTab === 'spouse' && (
-                  <div className="p-4 text-center text-sm text-muted-foreground bg-muted rounded-md">
-                    Spouse relationships will be supported in a future update.
-                    Please use Parent-Child relationships for now.
-                  </div>
-                )}
+                <FormField
+                  control={form.control}
+                  name="childId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>{activeTab === 'spouse' ? 'Partner 2' : 'Child'}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? persons.find(
+                                    (person) => person.id === field.value
+                                  )?.name
+                                : (activeTab === 'spouse' ? "Select partner 2" : "Select child")}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search person..." />
+                            <CommandList>
+                              <CommandEmpty>No person found.</CommandEmpty>
+                              <CommandGroup>
+                                {persons.map((person) => (
+                                  <CommandItem
+                                    value={person.name}
+                                    key={person.id}
+                                    onSelect={() => {
+                                      form.setValue("childId", person.id)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        person.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {person.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" type="button" onClick={onClose}>
@@ -277,7 +288,7 @@ export function RelationshipModal({
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={createRelationship.isPending || activeTab === 'spouse'}
+                    disabled={createRelationship.isPending}
                   >
                     {createRelationship.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

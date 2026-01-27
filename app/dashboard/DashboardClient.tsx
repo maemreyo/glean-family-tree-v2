@@ -357,6 +357,7 @@ export function DashboardClient({
       
       <PersonDetailSheet 
         persons={persons} 
+        userId={userId}
         onAddRelative={() => setIsRelationshipModalOpen(true)}
       />
     </div>

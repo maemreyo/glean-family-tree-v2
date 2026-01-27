@@ -22,6 +22,8 @@ export type Database = {
           gender: string | null
           id: string
           name: string
+          position_x: number | null
+          position_y: number | null
           updated_at: string
           user_id: string
         }
@@ -32,6 +34,8 @@ export type Database = {
           gender?: string | null
           id?: string
           name: string
+          position_x?: number | null
+          position_y?: number | null
           updated_at?: string
           user_id: string
         }
@@ -42,6 +46,8 @@ export type Database = {
           gender?: string | null
           id?: string
           name?: string
+          position_x?: number | null
+          position_y?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -53,6 +59,7 @@ export type Database = {
           created_at: string
           id: string
           parent_id: string
+          relationship_type: string
           user_id: string
         }
         Insert: {
@@ -60,6 +67,7 @@ export type Database = {
           created_at?: string
           id?: string
           parent_id: string
+          relationship_type?: string
           user_id: string
         }
         Update: {
@@ -67,6 +75,7 @@ export type Database = {
           created_at?: string
           id?: string
           parent_id?: string
+          relationship_type?: string
           user_id?: string
         }
         Relationships: [

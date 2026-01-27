@@ -2,6 +2,7 @@
 import type { Database } from '@/types/database.types'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
+type Person = Database['public']['Tables']['persons']['Row']
 
 interface ValidationResult {
   valid: boolean
@@ -14,9 +15,11 @@ interface ValidationResult {
  */
 export class RelationshipValidator {
   private relationships: Relationship[]
+  private persons: Person[]
 
-  constructor(relationships: Relationship[]) {
+  constructor(relationships: Relationship[], persons: Person[] = []) {
     this.relationships = relationships
+    this.persons = persons
   }
 
   /**
@@ -35,13 +38,30 @@ export class RelationshipValidator {
     const existingRelationship = this.relationships.find(
       (r) =>
         r.parent_id === parentId &&
-        r.child_id === childId
+        r.child_id === childId &&
+        r.relationship_type === 'parent'
     )
 
     if (existingRelationship) {
       return {
         valid: false,
         error: 'This parent-child relationship already exists',
+      }
+    }
+
+    // Birth date validation
+    const parent = this.persons.find((p) => p.id === parentId)
+    const child = this.persons.find((p) => p.id === childId)
+
+    if (parent?.date_of_birth && child?.date_of_birth) {
+      const parentDob = new Date(parent.date_of_birth)
+      const childDob = new Date(child.date_of_birth)
+
+      if (parentDob >= childDob) {
+        return {
+          valid: false,
+          error: 'Parent cannot be younger than or same age as child',
+        }
       }
     }
 
@@ -68,13 +88,31 @@ export class RelationshipValidator {
 
   /**
    * Validate spouse relationship
-   * @deprecated Spouse relationships are not yet supported in the database schema
    */
   validateSpouse(person1Id: string, person2Id: string): ValidationResult {
-    return {
+    if (person1Id === person2Id) {
+      return {
         valid: false,
-        error: 'Spouse relationships are not currently supported by the database schema.'
+        error: 'Cannot create relationship with same person',
+      }
     }
+
+    // Check if relationship already exists (in either direction)
+    const existingRelationship = this.relationships.find(
+      (r) =>
+        r.relationship_type === 'spouse' &&
+        ((r.parent_id === person1Id && r.child_id === person2Id) ||
+          (r.parent_id === person2Id && r.child_id === person1Id))
+    )
+
+    if (existingRelationship) {
+      return {
+        valid: false,
+        error: 'This spouse relationship already exists',
+      }
+    }
+
+    return { valid: true }
   }
 
   /**
@@ -93,7 +131,7 @@ export class RelationshipValidator {
 
       const parents = this.relationships
         .filter(
-          (r) => r.child_id === current
+          (r) => r.child_id === current && r.relationship_type === 'parent'
         )
         .map((r) => r.parent_id)
 
@@ -122,7 +160,7 @@ export class RelationshipValidator {
 
       const children = this.relationships
         .filter(
-          (r) => r.parent_id === current
+          (r) => r.parent_id === current && r.relationship_type === 'parent'
         )
         .map((r) => r.child_id)
 

@@ -1,4 +1,5 @@
 import "./globals.css";
+import 'reactflow/dist/style.css';
 
 import type { Metadata } from 'next/types'
 import localFont from "next/font/local";

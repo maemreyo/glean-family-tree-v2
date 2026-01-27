@@ -5,6 +5,7 @@ import type { Metadata } from 'next/types'
 import localFont from "next/font/local";
 
 import { Provider } from "@/components/provider";
+import { Providers } from "@/providers";
 
 const spaceMono = localFont({
   src: [
@@ -88,13 +89,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${spaceMono.className}`}>
-        <Provider attribute="class" defaultTheme="system" enableSystem>
-          <main
-            className={`bg-white text-zinc-700 dark:bg-black dark:text-zinc-400`}
-          >
-            {children}
-          </main>
-        </Provider>
+        <Providers>
+          <Provider attribute="class" defaultTheme="system" enableSystem>
+            <main
+              className={`bg-white text-zinc-700 dark:bg-black dark:text-zinc-400`}
+            >
+              {children}
+            </main>
+          </Provider>
+        </Providers>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 # 🗺️ Glean Family Tree V2 - Product Roadmap
 
-*Last Updated: 2026-01-27*
+*Last Updated: 2026-01-28*
 
 This document outlines the strategic development plan for **Glean Family Tree V2**, consolidated from previous planning documents (R1, R2). It prioritizes user experience, data integrity, and feature richness.
 
@@ -119,7 +119,13 @@ This document outlines the strategic development plan for **Glean Family Tree V2
 - **Objective**: Share the tree with family members.
 - **Tasks**:
   - [x] Generate "Read-only" public links.
-  - [ ] Invite collaborators (email invite).
+  - [ ] Invite collaborators (roles: viewer/editor, email invite).
+  - [ ] Privacy controls for living people (hide details by default).
+  - [ ] Per-profile visibility toggles (override defaults).
+  - [ ] Confidence/source tagging for facts (confirmed vs speculative).
+  - [ ] Stories & traditions on profiles (long-form narrative, timeline integration).
+  - [ ] Photo albums grouped by events (weddings, birthdays, reunions).
+  - [ ] Timeline view enhancements (printable charts, export-friendly layouts).
 
 
 ---

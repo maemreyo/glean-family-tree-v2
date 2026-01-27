@@ -76,7 +76,7 @@ export function PrintProfileClient({ person, lifeEvents, familyMembers }: PrintP
           <div className="flex-1">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">{person.name}</h1>
             {person.nickname && (
-              <p className="text-xl text-gray-500 mb-2">"{person.nickname}"</p>
+              <p className="text-xl text-gray-500 mb-2">&ldquo;{person.nickname}&rdquo;</p>
             )}
             
             <div className="flex flex-wrap gap-2 mb-4">

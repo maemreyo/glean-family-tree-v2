@@ -27,11 +27,28 @@ export default async function SharedTreePage({ params }: Props) {
   // Cast persons to PersonWithPhoto[] because Supabase types might be slightly different 
   // (e.g. nullability of joined fields) but we know the structure matches.
   const persons = data.persons as unknown as PersonWithPhoto[]
+  const sanitizedPersons = persons.map((person) => {
+    if (person.is_deceased) {
+      return person
+    }
+
+    return {
+      ...person,
+      date_of_birth: null,
+      date_of_death: null,
+      birth_place: null,
+      death_place: null,
+      occupation: null,
+      biography: null,
+      notes: null,
+      person_photos: [],
+    }
+  })
 
   return (
     <ShareTreeClient 
       userId={data.userId}
-      persons={persons}
+      persons={sanitizedPersons}
       relationships={data.relationships}
     />
   )

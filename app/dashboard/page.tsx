@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   // Prefetch data for React Query cache
   const { data: persons } = await supabase
     .from('persons')
-    .select('*')
+    .select('*, person_photos(url, is_profile_picture)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 

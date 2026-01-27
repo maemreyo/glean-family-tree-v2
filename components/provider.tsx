@@ -5,9 +5,13 @@ import {
   ThemeProvider as NextThemesProvider,
   type ThemeProviderProps,
 } from "next-themes";
+import { Toaster } from "@/components/ui/sonner"
 
 export function Provider({ children, ...props }: ThemeProviderProps) {
   return (
-    <NextThemesProvider {...props}>{children}</NextThemesProvider>
+    <NextThemesProvider {...props}>
+      {children}
+      <Toaster />
+    </NextThemesProvider>
   );
 }

@@ -22,6 +22,14 @@ export type Database = {
           gender: string | null
           id: string
           name: string
+          nickname: string | null
+          birth_place: string | null
+          death_place: string | null
+          is_deceased: boolean | null
+          date_of_death: string | null
+          occupation: string | null
+          biography: string | null
+          notes: string | null
           position_x: number | null
           position_y: number | null
           updated_at: string
@@ -34,6 +42,14 @@ export type Database = {
           gender?: string | null
           id?: string
           name: string
+          nickname?: string | null
+          birth_place?: string | null
+          death_place?: string | null
+          is_deceased?: boolean | null
+          date_of_death?: string | null
+          occupation?: string | null
+          biography?: string | null
+          notes?: string | null
           position_x?: number | null
           position_y?: number | null
           updated_at?: string
@@ -46,6 +62,14 @@ export type Database = {
           gender?: string | null
           id?: string
           name?: string
+          nickname?: string | null
+          birth_place?: string | null
+          death_place?: string | null
+          is_deceased?: boolean | null
+          date_of_death?: string | null
+          occupation?: string | null
+          biography?: string | null
+          notes?: string | null
           position_x?: number | null
           position_y?: number | null
           updated_at?: string
@@ -94,6 +118,115 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      person_photos: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_profile_picture: boolean | null
+          person_id: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_profile_picture?: boolean | null
+          person_id: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_profile_picture?: boolean | null
+          person_id?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_photos_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      life_events: {
+        Row: {
+          created_at: string
+          date: string | null
+          description: string | null
+          event_type: string
+          id: string
+          location: string | null
+          person_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          event_type: string
+          id?: string
+          location?: string | null
+          person_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          person_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "life_events_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_links: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

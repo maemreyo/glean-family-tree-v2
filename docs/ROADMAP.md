@@ -80,43 +80,47 @@ This document outlines the strategic development plan for **Glean Family Tree V2
 
 ### 3.1 Media Gallery
 - **Tasks**:
-  - [ ] Create `person_photos` table (Supabase Storage).
-  - [ ] Implement Image Upload with drag-and-drop.
-  - [ ] Photo Gallery view in Person Detail Panel.
-  - [ ] Set "Profile Picture" for Tree Nodes.
+  - [x] Create `person_photos` table (Supabase Storage).
+  - [x] Implement Image Upload with drag-and-drop.
+  - [x] Photo Gallery view in Person Detail Panel.
+  - [x] Set "Profile Picture" for Tree Nodes.
 
 ### 3.2 Life Events Timeline
 - **Tasks**:
-  - [ ] Create `life_events` table (Birth, Death, Marriage, Career).
-  - [ ] Build Timeline UI component.
-  - [ ] Sort events chronologically.
+  - [x] Create `life_events` table (Birth, Death, Marriage, Career).
+  - [x] Build Timeline UI component.
+  - [x] Sort events chronologically.
 
 ### 3.3 Extended Metadata
 - **Tasks**:
-  - [ ] Add fields: Nickname, Birth Place, Death Place, Occupation, Notes.
-  - [ ] Rich Text Editor for "Biography".
+  - [x] Add fields: Nickname, Birth Place, Death Place, Occupation, Notes.
+  - [x] Rich Text Editor for "Biography".
 
 ---
 
 ## 📤 Phase 4: Export & Sharing
-**Goal**: Allow users to share their work and backup data.
-**Estimated Duration**: 1-2 weeks
-**Priority**: LOW
+**Goal**: Allow users to take their data out and share it with others.
+**Estimated Duration**: 1 week
+**Priority**: MEDIUM
 
-### 4.1 Visual Export
+### 4.1 Export Visuals
+- **Objective**: Generate high-quality images of the tree.
 - **Tasks**:
-  - [ ] Export Tree as **PNG/SVG** (using `html-to-image`).
-  - [ ] Export Profile as **PDF**.
+  - [x] Export Tree as PNG/SVG (using `html-to-image`).
+  - [x] Export Profile as PDF (via Print View).
 
 ### 4.2 Data Portability
+- **Objective**: Standard genealogy format support.
 - **Tasks**:
-  - [ ] **GEDCOM Import/Export** (Standard genealogy format).
+  - [x] GEDCOM Import/Export.
   - [ ] JSON Backup/Restore.
 
 ### 4.3 Sharing
+- **Objective**: Share the tree with family members.
 - **Tasks**:
-  - [ ] Generate "Read-only" public links.
+  - [x] Generate "Read-only" public links.
   - [ ] Invite collaborators (email invite).
+
 
 ---
 

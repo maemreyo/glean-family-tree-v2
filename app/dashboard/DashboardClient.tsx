@@ -7,6 +7,7 @@ import { useUIStore } from '@/providers/ui-store-provider'
 import { useDashboardParams } from '@/lib/hooks/use-dashboard-params'
 import { useState } from 'react'
 import type { Database } from '@/types/database.types'
+import type { PersonWithPhoto } from '@/types/app'
 import { FamilyTree } from '@/components/FamilyTree'
 import { RelationshipModal } from '@/components/RelationshipModal'
 import { PersonDetailSheet } from '@/components/PersonDetailSheet'
@@ -15,12 +16,10 @@ import { ListSkeleton } from '@/components/skeletons/ListSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { seedMockData } from '@/lib/utils/seed'
 
-type Person = Database['public']['Tables']['persons']['Row']
-
 interface DashboardClientProps {
   userId: string
   userEmail: string
-  initialPersons: Person[]
+  initialPersons: PersonWithPhoto[]
 }
 
 /**

@@ -6,11 +6,11 @@ Tài liệu này mô tả quy trình phát triển, release và deployment cho d
 
 Chúng ta sử dụng 3 môi trường riêng biệt để đảm bảo chất lượng và an toàn dữ liệu:
 
-| Môi trường | Nhánh Git | URL (Vercel) | Supabase Project | Mục đích |
-|------------|-----------|--------------|------------------|----------|
-| **Preview** | `feature/*` | `git-branch-url.vercel.app` | *Staging* (chung) | Dev test, PR review |
-| **Staging** | `staging` | `staging.gleanfamily.com` | `glean-family-tree-staging` | UAT, Integration test |
-| **Production** | `main` | `gleanfamily.com` | `glean-family-tree-prod` | Live user traffic |
+| Môi trường | Nhánh Git | URL (Vercel) | Supabase Project | Project ID | Mục đích |
+|------------|-----------|--------------|------------------|------------|----------|
+| **Preview** | `feature/*` | `git-branch-url.vercel.app` | *Staging* (chung) | `lfaubupwqmujwpwckpfj` | Dev test, PR review |
+| **Staging** | `staging` | `staging.gleanfamily.com` | `glean-family-tree-staging` | `lfaubupwqmujwpwckpfj` | UAT, Integration test |
+| **Production** | `main` | `gleanfamily.com` | `glean-family-tree-v2` | `vcsjsqkjopcawdenncfn` | Live user traffic |
 
 > **Lưu ý:** Hiện tại chưa có domain thật, các URL trên là ví dụ. Vercel sẽ auto-generate domain dạng `project-name-git-branch.vercel.app`.
 

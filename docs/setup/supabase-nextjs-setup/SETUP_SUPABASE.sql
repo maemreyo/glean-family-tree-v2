@@ -55,11 +55,13 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists update_persons_updated_at on persons;
 create trigger update_persons_updated_at
   before update on persons
   for each row
   execute function update_updated_at_column();
 
+drop trigger if exists update_relationships_updated_at on relationships;
 create trigger update_relationships_updated_at
   before update on relationships
   for each row
@@ -128,8 +130,16 @@ create policy "Users can delete own relationships"
 -- =====================================================
 
 -- Enable Realtime for persons and relationships tables
-alter publication supabase_realtime add table persons;
-alter publication supabase_realtime add table relationships;
+-- We use a DO block to avoid errors if already added
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'persons') then
+    alter publication supabase_realtime add table persons;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'relationships') then
+    alter publication supabase_realtime add table relationships;
+  end if;
+end $$;
 
 -- =====================================================
 -- 7. VERIFY SETUP

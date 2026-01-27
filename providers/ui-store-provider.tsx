@@ -27,7 +27,7 @@ const UIStoreContext = createContext<ReturnType<typeof createUIStore> | null>(
  * ```
  */
 export function UIStoreProvider({ children }: { children: ReactNode }) {
-  const storeRef = useRef<ReturnType<typeof createUIStore>>()
+  const storeRef = useRef<ReturnType<typeof createUIStore> | undefined>(undefined)
 
   // Chỉ tạo store 1 lần
   if (!storeRef.current) {

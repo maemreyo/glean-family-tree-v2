@@ -15,17 +15,12 @@ export default function Hero() {
         </h1>
         <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
           Glean Family Tree helps you organize, visualize, and share your family history. 
-          Built with modern technologies for a seamless experience.
+          Built for teams that care about privacy and long-term ownership of their data.
         </p>
         <div className="flex gap-4">
           <Link href="/dashboard">
             <Button size="lg" className="h-11 px-8">
               Get Started
-            </Button>
-          </Link>
-          <Link href="https://github.com/maemreyo/glean-family-tree-v2" target="_blank">
-            <Button variant="outline" size="lg" className="h-11 px-8">
-              GitHub
             </Button>
           </Link>
         </div>

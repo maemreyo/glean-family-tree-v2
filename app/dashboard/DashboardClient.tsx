@@ -248,7 +248,7 @@ export function DashboardClient({
                   ))}
                   {filteredPersons.length === 0 && (
                     <p className="col-span-full py-8 text-center text-gray-500">
-                      No persons found matching "{searchQuery}"
+                      No persons found matching &quot;{searchQuery}&quot;
                     </p>
                   )}
                 </div>

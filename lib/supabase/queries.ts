@@ -14,6 +14,9 @@ type Person = Database['public']['Tables']['persons']['Row']
 type PersonInsert = Database['public']['Tables']['persons']['Insert']
 type PersonUpdate = Database['public']['Tables']['persons']['Update']
 
+type Relationship = Database['public']['Tables']['relationships']['Row']
+type RelationshipInsert = Database['public']['Tables']['relationships']['Insert']
+
 const supabase = createClientSupabase()
 
 /**
@@ -28,6 +31,7 @@ export const queryKeys = {
   },
   relationships: {
     all: ['relationships'] as const,
+    byUser: (userId: string) => ['relationships', 'user', userId] as const,
     byFamily: (familyId: string) =>
       ['relationships', 'family', familyId] as const,
   },
@@ -251,6 +255,76 @@ export function useCreatePersonsBatch() {
     onSuccess: () => {
       // Invalidate all persons queries
       queryClient.invalidateQueries({ queryKey: queryKeys.persons.all })
+    },
+  })
+}
+
+// ============================================
+// RELATIONSHIPS QUERIES
+// ============================================
+
+export function useRelationships(
+  userId: string,
+  options?: Omit<UseQueryOptions<Relationship[]>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: queryKeys.relationships.byUser(userId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('relationships')
+        .select('*')
+        .eq('user_id', userId)
+
+      if (error) throw error
+      return data
+    },
+    ...options,
+  })
+}
+
+// ============================================
+// RELATIONSHIPS MUTATIONS
+// ============================================
+
+export function useCreateRelationship() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (relationship: RelationshipInsert) => {
+      const { data, error } = await supabase
+        .from('relationships')
+        .insert(relationship)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: (newRel) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationships.byUser(newRel.user_id),
+      })
+    },
+  })
+}
+
+export function useDeleteRelationship() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('relationships')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      return id
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationships.all,
+      })
     },
   })
 }

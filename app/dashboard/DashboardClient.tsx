@@ -2,10 +2,11 @@
 'use client'
 
 import { usePersons, useCreatePerson, useDeletePerson } from '@/lib/supabase/queries'
-import { useRealtimePersons } from '@/lib/supabase/realtime'
+import { useRealtimeMultiple } from '@/lib/supabase/realtime'
 import { useUIStore } from '@/providers/ui-store-provider'
 import { useState } from 'react'
 import type { Database } from '@/types/database.types'
+import { FamilyTree } from '@/components/FamilyTree'
 
 type Person = Database['public']['Tables']['persons']['Row']
 
@@ -58,7 +59,7 @@ export function DashboardClient({
   // ============================================
   // Realtime Subscriptions
   // ============================================
-  useRealtimePersons(userId)
+  useRealtimeMultiple(['persons', 'relationships'], userId)
 
   // ============================================
   // Local Form State
@@ -163,7 +164,13 @@ export function DashboardClient({
 
         {/* Content Body */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6 dark:bg-gray-900">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-6xl">
+            {/* Family Tree Visualization */}
+            <div className="mb-8 h-[500px] w-full">
+               <h3 className="mb-4 text-lg font-bold">Family Tree Visualization</h3>
+               <FamilyTree userId={userId} persons={persons} />
+            </div>
+
             {/* Create Person Form */}
             <div className="mb-8 rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
               <h3 className="mb-4 text-lg font-bold">Add New Person</h3>

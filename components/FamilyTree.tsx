@@ -30,6 +30,8 @@ interface FamilyTreeProps {
 const nodeWidth = 172
 const nodeHeight = 36
 
+const EMPTY_RELATIONSHIPS: Relationship[] = []
+
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -64,7 +66,8 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 }
 
 export function FamilyTree({ userId, persons }: FamilyTreeProps) {
-  const { data: relationships = [] } = useRelationships(userId)
+  const { data: relationshipsData } = useRelationships(userId)
+  const relationships = relationshipsData || EMPTY_RELATIONSHIPS
   const openPersonModal = useUIStore((state) => state.openPersonModal)
 
   const initialNodes: Node[] = useMemo(() => {

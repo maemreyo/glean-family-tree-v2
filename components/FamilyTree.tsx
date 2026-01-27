@@ -47,22 +47,20 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 
   dagre.layout(dagreGraph)
 
-  nodes.forEach((node) => {
+  const newNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id)
-    node.targetPosition = isHorizontal ? Position.Left : Position.Top
-    node.sourcePosition = isHorizontal ? Position.Right : Position.Bottom
-
-    // We are shifting the dagre node position (anchor=center center) to the top left
-    // so it matches the React Flow node anchor point (top left).
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
+    return {
+      ...node,
+      targetPosition: isHorizontal ? Position.Left : Position.Top,
+      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+      position: {
+        x: nodeWithPosition.x - nodeWidth / 2,
+        y: nodeWithPosition.y - nodeHeight / 2,
+      },
     }
-
-    return node
   })
 
-  return { nodes, edges }
+  return { nodes: newNodes, edges }
 }
 
 export function FamilyTree({ userId, persons }: FamilyTreeProps) {

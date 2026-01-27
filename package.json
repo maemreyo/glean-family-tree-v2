@@ -1,6 +1,17 @@
 {
   "name": "glean-family-tree",
   "version": "0.1.0",
+  "description": "A modern Family Tree application built with Next.js 15, Supabase, React Query, and ReactFlow.",
+  "author": "zaob.ogn <zaob.ogn@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maemreyo/glean-family-tree-v2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/maemreyo/glean-family-tree-v2/issues"
+  },
+  "homepage": "https://github.com/maemreyo/glean-family-tree-v2#readme",
   "private": true,
   "scripts": {
     "dev": "next dev",

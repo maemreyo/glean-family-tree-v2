@@ -18,15 +18,14 @@ export default function Home() {
               01
             </span>
             <p className="pb-6 font-medium">
-              Think of Kaminari as that friend who shows up with snacks and
-              already picked the movie, so all you have to do is sit back and
-              enjoy the show. I handled all the basic configs for you. Enjoy!
+              Glean Family Tree helps you organize and visualize your family connections. 
+              Built with Next.js 15, Supabase, and ReactFlow for a modern experience.
             </p>
 
             <div className="">
               <Button size="xl" className="w-full font-bold" variant="brand">
                 <a
-                  href="https://github.com/lucky-chap/kaminari"
+                  href="https://github.com/maemreyo/glean-family-tree-v2"
                   target="_blank"
                   rel="noreferrer"
                   className="pb-1 text-zinc-100 dark:text-zinc-800"

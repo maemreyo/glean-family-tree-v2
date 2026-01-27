@@ -23,6 +23,12 @@ A modern Family Tree application built with Next.js 15, Supabase, React Query, a
 
 ## Getting Started
 
+The best way to start with this template is using `create-next-app`.
+
+```
+npx create-next-app my-app -e https://github.com/maemreyo/glean-family-tree-v2
+```
+
 1. **Install Dependencies**
    ```bash
    npm install

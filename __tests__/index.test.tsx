@@ -11,7 +11,7 @@ describe("Home", () => {
     render(<Home />);
 
     const text = screen.getByText(
-      /Think of Kaminari as that friend who shows up with snacks and already picked the movie/i,
+      /Glean Family Tree helps you organize and visualize your family connections/i,
     );
 
     expect(text).toBeInTheDocument();

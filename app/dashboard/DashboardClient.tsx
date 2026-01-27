@@ -7,6 +7,8 @@ import { useUIStore } from '@/providers/ui-store-provider'
 import { useState } from 'react'
 import type { Database } from '@/types/database.types'
 import { FamilyTree } from '@/components/FamilyTree'
+import { RelationshipModal } from '@/components/RelationshipModal'
+import { seedMockData } from '@/lib/utils/seed'
 
 type Person = Database['public']['Tables']['persons']['Row']
 
@@ -27,6 +29,8 @@ interface DashboardClientProps {
  * - Loading states
  * - Error handling
  */
+const REALTIME_TABLES = ['persons', 'relationships']
+
 export function DashboardClient({
   userId,
   userEmail,
@@ -59,12 +63,14 @@ export function DashboardClient({
   // ============================================
   // Realtime Subscriptions
   // ============================================
-  useRealtimeMultiple(['persons', 'relationships'], userId)
+  useRealtimeMultiple(REALTIME_TABLES, userId)
 
   // ============================================
   // Local Form State
   // ============================================
   const [newPersonName, setNewPersonName] = useState('')
+  const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false)
+  const [isSeeding, setIsSeeding] = useState(false)
 
   // ============================================
   // Handlers
@@ -244,6 +250,13 @@ export function DashboardClient({
           </div>
         </main>
       </div>
+
+      <RelationshipModal
+        isOpen={isRelationshipModalOpen}
+        onClose={() => setIsRelationshipModalOpen(false)}
+        persons={persons}
+        userId={userId}
+      />
     </div>
   )
 }

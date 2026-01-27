@@ -188,7 +188,7 @@ export function useRealtimeMultiple(
     return () => {
       channels.forEach((channel) => supabase.removeChannel(channel))
     }
-  }, [tables.join(','), userId, queryClient, onEvent])
+  }, [tables, userId, queryClient, onEvent])
 }
 
 /**

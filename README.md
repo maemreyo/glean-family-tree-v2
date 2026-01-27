@@ -1,75 +1,55 @@
-<p align="center">
-  <img src="public/og.png" alt="Next.js and TypeScript">
-</p>
+# Glean Family Tree V2
 
-<p align="center">
-  <img src="https://img.shields.io/static/v1?label=PRs&message=welcome&style=for-the-badge&color=24B36B&labelColor=000000" alt="PRs welcome!" />
+A modern Family Tree application built with Next.js 15, Supabase, React Query, and ReactFlow.
 
-</p>
+## Documentation
+> **[👉 View Detailed Implementation Status](docs/CURRENT_IMPLEMENTATION.md)**
 
-<p align="center">
-  <img alt="License" src="https://img.shields.io/github/license/chhpt/typescript-nextjs-starter?style=for-the-badge&color=24B36B&labelColor=000000">
-  </a>
-</p>
+## Features
+- **Family Tree Visualization**: Interactive graph view using ReactFlow + Dagre layout.
+- **Realtime Updates**: Live synchronization across clients using Supabase Realtime.
+- **Person Management**: Create, edit, and delete family members.
+- **Relationship Tracking**: Define parent-child relationships.
+- **Secure**: Row Level Security (RLS) ensures data privacy.
 
-<p align="center">
-  <a href="https://twitter.com/intent/follow?screen_name=hunchodotdev">
-    <img src="https://img.shields.io/twitter/follow/hunchodotdev?style=for-the-badge&color=24B36B&labelColor=000000" alt="Follow @hunchodotdev" />
-  </a>
-</p>
+## Tech Stack
+- **Framework**: Next.js 15 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **State Management**:
+  - Server: React Query
+  - Client: Zustand
+- **Styling**: Tailwind CSS 4
+- **Language**: TypeScript
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Flucky-chap%2Fkaminari&demo-title=Kaminari&demo-description=Next.js%2C%20TailwindCSS%20and%20shadcn-ui%20Starter%20Template&demo-url=https%3A%2F%2Fkaminari.vercel.app&demo-image=https%3A%2F%2Fkaminari.vercel.app%2Fog.png)
+## Getting Started
 
-## No bullshit Next.js starter by [Huncho](https://github.com/lucky-chap) (Version 4 coming soon 🔥)
+1. **Install Dependencies**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
 
-## Features 💅
+2. **Environment Setup**
+   Copy `.env.local.example` to `.env.local` and add your Supabase credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   ```
 
-- **Next.js 15.x.x** - Why not?
-- **Tailwind CSS 4** - A utility-first CSS framework
-- **shadcn-ui** - An awesome component library
-- **TypeScript** - JavaScript superset
-- **ESLint** — Pluggable JavaScript linter
-- **Prettier** - Opinionated
-- **Jest** - The delightful JavaScript Testing Framework (coming soon)
-- **Absolute import** - Import folders and files using the `@` prefix
-- **Quick deploy** - Quickly deploy with the `Vercel Deploy button below`
+3. **Run Development Server**
+   ```bash
+   npm run dev
+   ```
 
-## Getting started 🚀
+4. **Open in Browser**
+   Visit [http://localhost:3000](http://localhost:3000).
 
-The best way to start with this template is using `create-next-app`.
+## Project Structure
+- `app/dashboard`: Main application logic.
+- `components/FamilyTree.tsx`: Visualization component.
+- `lib/supabase`: Database and realtime logic.
+- `docs/`: Detailed documentation and setup guides.
 
-```
-npx create-next-app my-app -e https://github.com/lucky-chap/kaminari
-```
-
-If you prefer you can clone this repository and run the following commands inside the project folder:
-
-1. `npm install` or `yarn`;
-2. `yarn dev`;
-
-To view the project open `http://localhost:3000`.
-
-## Star ✨
-
-I want this project to go far. Please show your support by starring it. Thank you!
-
-## Contributing 🤝
-
-1. Fork this repository;
-2. Create your branch: `git checkout -b my-new-feature`;
-3. Commit your changes: `git commit -m 'Add some feature'`;
-4. Push to the branch: `git push origin my-new-feature`.
-
-**After your pull request is merged**, you can safely delete your branch.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for more information.
-
----
-
-Made with ♥ by [TheAscendant](https://twitter.com/hunchodotdev)
-
-## 🔗 Important Links
-
-- [Custom Cypress Config](https://github.com/cypress-io/cypress/issues/22059#issuecomment-1178574704)
+## License
+MIT

@@ -9,6 +9,10 @@ import { useState } from 'react'
 import type { Database } from '@/types/database.types'
 import { FamilyTree } from '@/components/FamilyTree'
 import { RelationshipModal } from '@/components/RelationshipModal'
+import { PersonDetailSheet } from '@/components/PersonDetailSheet'
+import { TreeSkeleton } from '@/components/skeletons/TreeSkeleton'
+import { ListSkeleton } from '@/components/skeletons/ListSkeleton'
+import { EmptyState } from '@/components/EmptyState'
 import { seedMockData } from '@/lib/utils/seed'
 
 type Person = Database['public']['Tables']['persons']['Row']
@@ -220,7 +224,12 @@ export function DashboardClient({
             </div>
 
             {/* Content View */}
-            {activeTab === 'tree' ? (
+            {isLoading ? (
+              <div className="mb-8 w-full">
+                <h3 className="mb-4 text-lg font-bold">Loading...</h3>
+                {activeTab === 'tree' ? <TreeSkeleton /> : <ListSkeleton />}
+              </div>
+            ) : activeTab === 'tree' ? (
               <div className="mb-8 h-[500px] w-full">
                  <h3 className="mb-4 text-lg font-bold">Family Tree Visualization</h3>
                  <FamilyTree userId={userId} persons={filteredPersons} />
@@ -233,13 +242,17 @@ export function DashboardClient({
                     <div 
                       key={person.id} 
                       className="flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+                      onClick={() => openPersonModal(person.id)}
                     >
-                      <div>
+                      <div className="cursor-pointer">
                         <p className="font-semibold">{person.name}</p>
                         <p className="text-xs text-gray-500">ID: {person.id.slice(0, 8)}...</p>
                       </div>
                       <button
-                        onClick={() => handleDeletePerson(person.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeletePerson(person.id)
+                        }}
                         className="text-red-500 hover:text-red-700"
                       >
                         Delete
@@ -260,6 +273,7 @@ export function DashboardClient({
               <h3 className="mb-4 text-lg font-bold">Add New Person</h3>
               <div className="flex gap-4">
                 <input
+                  id="new-person-input"
                   type="text"
                   value={newPersonName}
                   onChange={(e) => setNewPersonName(e.target.value)}
@@ -287,7 +301,12 @@ export function DashboardClient({
               {error ? (
                 <div className="text-red-500">Error loading persons</div>
               ) : persons.length === 0 ? (
-                <p className="text-gray-500">No persons found. Add one above!</p>
+                <EmptyState 
+                  title="No family members yet" 
+                  description="Get started by adding yourself or a family member above."
+                  actionLabel="Add Person"
+                  onAction={() => document.getElementById('new-person-input')?.focus()}
+                />
               ) : (
                 <ul className="divide-y dark:divide-gray-700">
                   {persons.map((person) => (
@@ -334,6 +353,11 @@ export function DashboardClient({
         onClose={() => setIsRelationshipModalOpen(false)}
         persons={persons}
         userId={userId}
+      />
+      
+      <PersonDetailSheet 
+        persons={persons} 
+        onAddRelative={() => setIsRelationshipModalOpen(true)}
       />
     </div>
   )

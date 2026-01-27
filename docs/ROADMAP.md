@@ -31,24 +31,24 @@ This document outlines the strategic development plan for **Glean Family Tree V2
 ### 1.1 Advanced Relationship Modal
 - **Objective**: Replace native HTML selects with a searchable, intuitive UI.
 - **Tasks**:
-  - [ ] Implement `RelationshipModal` using **Shadcn UI** (Dialog, Command/Combobox).
-  - [ ] Add validation to prevent duplicate parent-child links.
-  - [ ] Improve form validation feedback.
+  - [x] Implement `RelationshipModal` using **Shadcn UI** (Dialog, Command/Combobox).
+  - [x] Add validation to prevent duplicate parent-child links.
+  - [x] Improve form validation feedback.
 - **Tech**: Shadcn UI, React Hook Form, Zod.
 
 ### 1.2 Interactive Family Tree
 - **Objective**: Make the tree nodes clickable and informative.
 - **Tasks**:
-  - [ ] Implement **Node Click Handler** in ReactFlow.
-  - [ ] Build **Person Detail Side Panel** (Sheet component) to view/edit details without leaving the tree.
-  - [ ] Add visual feedback on hover/selection.
+  - [x] Implement **Node Click Handler** in ReactFlow.
+  - [x] Build **Person Detail Side Panel** (Sheet component) to view/edit details without leaving the tree.
+  - [x] Add visual feedback on hover/selection.
 - **Tech**: ReactFlow events, Shadcn Sheet.
 
 ### 1.3 Loading & Empty States
 - **Objective**: Eliminate layout shifts and confusion during data fetch.
 - **Tasks**:
-  - [ ] Add Skeleton loaders for Tree and List views.
-  - [ ] Design friendly "Empty State" for new users (Call to action to add first person).
+  - [x] Add Skeleton loaders for Tree and List views.
+  - [x] Design friendly "Empty State" for new users (Call to action to add first person).
 
 ---
 

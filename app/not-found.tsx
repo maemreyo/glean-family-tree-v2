@@ -11,7 +11,7 @@ export default function NotFound() {
         to buy that milk.
       </p>
       <div className="mx-auto mt-8 w-full max-w-lg md:mt-0">
-        <Button size="lg" className="w-full font-bold" variant="brand">
+        <Button size="lg" className="w-full font-bold" variant="default">
           <Link href="/" className="pb-1 text-zinc-100 dark:text-zinc-800">
             Find your dad.
           </Link>{" "}

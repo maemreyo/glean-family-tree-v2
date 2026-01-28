@@ -1,13 +1,13 @@
 # Trạng thái Triển khai Hiện tại (Current Implementation)
 
-*Cập nhật lần cuối: 2026-01-27*
+*Cập nhật lần cuối: 2026-01-28*
 
 Tài liệu này cung cấp cái nhìn tổng quan và chi tiết về trạng thái hiện tại của dự án `glean-family-tree-v2`.
 
 ## 1. Tổng quan
 
 - **Tên dự án**: Glean Family Tree V2
-- **Phiên bản**: 0.1.1
+- **Phiên bản**: 0.2.0 (Phase 4 Completed)
 - **Trạng thái**: Đang phát triển (In Development)
 - **Mô hình triển khai**: 3-Tier (Preview -> Staging -> Production)
   - **Staging**: Chạy trên Supabase Project `lfaubupwqmujwpwckpfj` (Mới tạo)
@@ -36,7 +36,9 @@ Cấu trúc thư mục chính và vai trò của từng phần:
 │   ├── ui/                     # Shadcn UI Components (Button, Input, Card...)
 │   ├── FamilyTree.tsx          # Component hiển thị cây gia phả (ReactFlow)
 │   ├── RelationshipModal.tsx   # Modal tạo/sửa mối quan hệ
-│   └── ShareDialog.tsx         # [NEW] Modal quản lý chia sẻ
+│   ├── ShareDialog.tsx         # [NEW] Modal quản lý chia sẻ
+│   ├── PhotoGallery.tsx        # [NEW] Quản lý thư viện ảnh
+│   └── LifeEventTimeline.tsx   # [NEW] Dòng thời gian sự kiện cuộc đời
 ├── lib/                        # Logic & Utilities
 │   ├── supabase/               # Supabase Integration
 │   │   ├── client.ts           # Client-side Supabase client
@@ -82,6 +84,8 @@ Cấu trúc thư mục chính và vai trò của từng phần:
 | **Quản lý Persons** | `lib/supabase/queries.ts` | ✅ Hoàn thành | CRUD đầy đủ. Mới thêm `is_deceased`, `date_of_death`. |
 | **Quản lý Relationships** | `components/RelationshipModal.tsx` | ⚠️ Cơ bản | Đã có chức năng tạo Parent-Child. UI đang dùng native select, chưa tối ưu UX. |
 | **Export/Share** | `components/ShareDialog.tsx` | ✅ Hoàn thành | Tạo link public read-only, Export PNG/SVG/PDF. |
+| **Life Events** | `components/LifeEventTimeline.tsx` | ✅ Hoàn thành | Timeline sự kiện, hỗ trợ Stories/Traditions và gắn ảnh. |
+| **Photo Gallery** | `components/PhotoGallery.tsx` | ✅ Hoàn thành | Upload ảnh, nhóm theo sự kiện (Phase 4). |
 
 ### 3.3. Visualization (Family Tree)
 | Tính năng | Công nghệ | Trạng thái | Ghi chú |
@@ -90,7 +94,7 @@ Cấu trúc thư mục chính và vai trò của từng phần:
 | **Auto Layout** | Dagre | ✅ Hoàn thành | Tự động sắp xếp vị trí node theo phân cấp. |
 | **Interactivity** | ReactFlow | ⚠️ Cơ bản | Zoom, Pan hoạt động. Chưa có click node để xem chi tiết/edit. |
 | **Export Image** | html-to-image | ✅ Hoàn thành | Xuất cây ra file ảnh PNG/SVG. |
-| **Print View** | CSS Print | ✅ Hoàn thành | In ra PDF thông qua trình duyệt. |
+| **Print View** | CSS Print | ✅ Hoàn thành | In ra PDF với Family Chart trực quan. |
 
 ### 3.4. State Management
 | Loại State | Thư viện | Pattern | Trạng thái |

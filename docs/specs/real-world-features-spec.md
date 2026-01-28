@@ -5,13 +5,15 @@ Dựa trên research các ứng dụng gia phả phổ biến (Ancestry, MyHerit
 ## ✅ Current Features (From CURRENT_IMPLEMENTATION.md)
 
 - [x] Basic person management (CRUD)
-- [x] Parent-child relationships
-- [x] Visual tree display
-- [x] Authentication
-- [x] Realtime updates
-- [x] Auto layout
+- [x] Parent-child relationships & Spouses
+- [x] Visual tree display (Auto layout)
+- [x] Authentication & Realtime updates
+- [x] Rich Profiles (Photos, Timeline, Bio, Extended Attributes)
+- [x] Life Events (Birth, Death, Marriage, Career, Stories)
+- [x] Export/Sharing (PDF, PNG, GEDCOM, JSON, Public Links)
+- [x] Privacy Controls
 
-## 🎯 Critical Missing Features (High Priority)
+## 🎯 Critical Missing Features (Backlog)
 
 ### 1. 👤 **Rich Person Profiles**
 

@@ -4,6 +4,8 @@ import { ShareTreeClient } from './ShareTreeClient'
 import { Metadata } from 'next'
 import { PersonWithPhoto } from '@/types/app'
 
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{ token: string }>
 }

@@ -19,7 +19,6 @@ import ReactFlow, {
   getRectOfNodes,
   getTransformForBounds,
 } from 'reactflow'
-import 'reactflow/dist/style.css'
 import dagre from 'dagre'
 import { toPng } from 'html-to-image'
 import { usePersons, useRelationships, useUpdatePerson } from '@/lib/supabase/queries'

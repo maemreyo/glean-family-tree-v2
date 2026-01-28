@@ -1,12 +1,34 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
 export default function ThemeToggle() {
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex border items-center bg-[#fafafa] shado dark:bg-[#111] dark:border-zinc-800 p-2 px-4 w- justify-between rounded-full">
+        <button className="mr-2 p-1 dark:text-zinc-500 text-zinc-700">
+          <Icons.monitor classes="" />
+        </button>
+        <button className="mr-2 p-1 dark:text-zinc-500 text-zinc-700">
+          <Icons.moon />
+        </button>
+        <button className="mr-2 p-1 dark:text-zinc-500 text-zinc-700">
+          <Icons.sun />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex border items-center bg-[#fafafa] shado dark:bg-[#111] dark:border-zinc-800 p-2 px-4 w- justify-between rounded-full">
       <button
@@ -14,7 +36,6 @@ export default function ThemeToggle() {
             ? "bg-white dark:bg-[#333] text-zinc-50 rounded-full shadow-xl"
             : ""
           }`}
-        // className={cn("mr-2 p-1 dark:text-zinc-500 text-zinc-700", theme === "system" ? "bg-white dark:bg-[#333] text-zinc-50 rounded-full shadow-xl" : "")}
         onClick={() => setTheme("system")}
       >
         <Icons.monitor classes="" />

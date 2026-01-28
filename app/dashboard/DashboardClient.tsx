@@ -6,15 +6,20 @@ import { useRealtimeMultiple } from '@/lib/supabase/realtime'
 import { useUIStore } from '@/providers/ui-store-provider'
 import { useDashboardParams } from '@/lib/hooks/use-dashboard-params'
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import type { Database } from '@/types/database.types'
 import type { PersonWithPhoto } from '@/types/app'
-import { FamilyTree } from '@/components/FamilyTree'
 import { RelationshipModal } from '@/components/RelationshipModal'
 import { PersonDetailSheet } from '@/components/PersonDetailSheet'
 import { TreeSkeleton } from '@/components/skeletons/TreeSkeleton'
 import { ListSkeleton } from '@/components/skeletons/ListSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { seedMockData } from '@/lib/utils/seed'
+
+const FamilyTree = dynamic(() => import('@/components/FamilyTree').then(mod => mod.FamilyTree), {
+  ssr: false,
+  loading: () => <TreeSkeleton />,
+})
 
 interface DashboardClientProps {
   userId: string
@@ -115,7 +120,7 @@ export function DashboardClient({
     }
 
     try {
-      await deletePerson.mutateAsync(personId)
+      await deletePerson.mutateAsync({ id: personId, userId })
       showToast('Person deleted successfully!', 'success')
     } catch (error) {
       console.error('Error deleting person:', error)

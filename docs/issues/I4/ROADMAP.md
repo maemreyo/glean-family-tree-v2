@@ -32,14 +32,14 @@ Thứ ba, bundle size là một concern không nhỏ. D3.js với tất cả mod
 
 Việc thêm nhiều libraries vào project sẽ ảnh hưởng đến bundle size và initial load time. Đây là một yếu tố quan trọng cần cân nhắc, đặc biệt với focus của roadmap vào performance. Các libraries chính và ước tính impact của chúng bao gồm:
 
-| Library | Estimated Size | Notes |
-|---------|----------------|-------|
-| React Flow | ~100KB gzipped | Core, phần lớn là necessary |
-| D3.js (select modules) | ~50-80KB | Chỉ import cần thiết |
-| Fuse.js | ~10KB | Lightweight |
-| Recharts | ~40KB | Nếu cần charts |
-| Radix UI (3-4 components) | ~15KB | Headless, styles từ Tailwind |
-| date-fns | ~20KB | Tree-shakeable |
+| Library                   | Estimated Size | Notes                        |
+| ------------------------- | -------------- | ---------------------------- |
+| React Flow                | ~100KB gzipped | Core, phần lớn là necessary  |
+| D3.js (select modules)    | ~50-80KB       | Chỉ import cần thiết         |
+| Fuse.js                   | ~10KB          | Lightweight                  |
+| Recharts                  | ~40KB          | Nếu cần charts               |
+| Radix UI (3-4 components) | ~15KB          | Headless, styles từ Tailwind |
+| date-fns                  | ~20KB          | Tree-shakeable               |
 
 Tổng ước tính nếu implement tất cả: ~200-250KB gzipped, chưa kể application code. Đây là mức chấp nhận được cho một single-page application, nhưng cần implement code splitting để không load tất cả ngay lập tức. Recommendation là lazy-load các features không critical như statistics panel và multiple layouts.
 
@@ -85,18 +85,18 @@ AI-powered photo face matching - out of scope cho Phase 1. DNA integration - req
 
 Dựa trên effort estimates từ roadmap và user impact assessment, ROI analysis như sau:
 
-| Feature | Effort (days) | User Impact | Priority |
-|---------|---------------|-------------|----------|
-| Virtual Rendering | 5 | High - Enable scaling | 1 |
-| Keyboard Shortcuts | 3 | Medium-High - Power users | 2 |
-| Filters | 8 | High - Usability | 3 |
-| Hover Preview | 3 | High - Exploration | 4 |
-| Mini-map | 2 | Medium - Navigation | 5 |
-| Loading States | 2 | Medium - Perception | 6 |
-| Context Menu | 3 | Medium - Actions | 7 |
-| Statistics | 5 | Low-Medium - Insights | 8 |
-| Layout Algorithms | 10 | Medium - Variety | 9 |
-| Auto-detection | 12 | Low-Medium - Data quality | 10 |
+| Feature            | Effort (days) | User Impact               | Priority |
+| ------------------ | ------------- | ------------------------- | -------- |
+| Virtual Rendering  | 5             | High - Enable scaling     | 1        |
+| Keyboard Shortcuts | 3             | Medium-High - Power users | 2        |
+| Filters            | 8             | High - Usability          | 3        |
+| Hover Preview      | 3             | High - Exploration        | 4        |
+| Mini-map           | 2             | Medium - Navigation       | 5        |
+| Loading States     | 2             | Medium - Perception       | 6        |
+| Context Menu       | 3             | Medium - Actions          | 7        |
+| Statistics         | 5             | Low-Medium - Insights     | 8        |
+| Layout Algorithms  | 10            | Medium - Variety          | 9        |
+| Auto-detection     | 12            | Low-Medium - Data quality | 10       |
 
 Phân tích này cho thấy focus vào virtual rendering, keyboard shortcuts và filters sẽ có impact cao nhất per effort. Multiple layout algorithms mặc dù được đề cập nhiều trong roadmap, có ROI thấp hơn và nên be lower priority.
 
@@ -190,48 +190,51 @@ Data validation cho genealogy data như birth before death và parent-child age 
 
 ```typescript
 // Custom hook cho viewport-based node filtering
-import { useCallback, useMemo, useState } from 'react'
-import { useReactFlow, Viewport } from '@reactflow/core'
+import { useCallback, useMemo, useState } from "react";
+import { useReactFlow, Viewport } from "@reactflow/core";
 
 interface VirtualNodesConfig {
-  padding: number
-  lodThreshold: number
+  padding: number;
+  lodThreshold: number;
 }
 
 export function useVirtualNodes(allNodes: Node[], config: VirtualNodesConfig) {
-  const { viewport } = useReactFlow()
-  
+  const { viewport } = useReactFlow();
+
   // Tính toán visible bounds dựa trên viewport
-  const visibleBounds = useMemo(() => ({
-    x: viewport.x - config.padding,
-    y: viewport.y - config.padding,
-    width: viewport.width + config.padding * 2,
-    height: viewport.height + config.padding * 2
-  }), [viewport, config.padding])
-  
+  const visibleBounds = useMemo(
+    () => ({
+      x: viewport.x - config.padding,
+      y: viewport.y - config.padding,
+      width: viewport.width + config.padding * 2,
+      height: viewport.height + config.padding * 2,
+    }),
+    [viewport, config.padding]
+  );
+
   // Filter nodes trong viewport
   const visibleNodes = useMemo(() => {
-    return allNodes.filter(node => {
-      const nodeWidth = node.width || 200
-      const nodeHeight = node.height || 100
+    return allNodes.filter((node) => {
+      const nodeWidth = node.width || 200;
+      const nodeHeight = node.height || 100;
       return (
         node.position.x + nodeWidth > visibleBounds.x &&
         node.position.x < visibleBounds.x + visibleBounds.width &&
         node.position.y + nodeHeight > visibleBounds.y &&
         node.position.y < visibleBounds.y + visibleBounds.height
-      )
-    })
-  }, [allNodes, visibleBounds])
-  
+      );
+    });
+  }, [allNodes, visibleBounds]);
+
   // Apply LOD khi zoomed out
   const renderedNodes = useMemo(() => {
     if (viewport.zoom < config.lodThreshold) {
-      return visibleNodes.map(node => simplifyNode(node))
+      return visibleNodes.map((node) => simplifyNode(node));
     }
-    return visibleNodes
-  }, [visibleNodes, viewport.zoom, config.lodThreshold])
-  
-  return renderedNodes
+    return visibleNodes;
+  }, [visibleNodes, viewport.zoom, config.lodThreshold]);
+
+  return renderedNodes;
 }
 
 function simplifyNode(node: Node): Node {
@@ -240,9 +243,9 @@ function simplifyNode(node: Node): Node {
     ...node,
     data: {
       ...node.data,
-      simplified: true
-    }
-  }
+      simplified: true,
+    },
+  };
 }
 ```
 
@@ -260,54 +263,54 @@ Bước đầu tiên là cài đặt dependencies với `npm install @reactflow/
 
 ```typescript
 // Custom hook cho family tree shortcuts
-import { useHotkeys } from 'react-hotkeys-hook'
-import { useReactFlow } from '@reactflow/react'
+import { useReactFlow } from "@reactflow/react";
+import { useHotkeys } from "react-hotkeys-hook";
 
 interface ShortcutCallbacks {
-  onUndo: () => void
-  onRedo: () => void
-  onSearch: () => void
-  onDelete: () => void
-  onZoomIn: () => void
-  onZoomOut: () => void
-  onFitView: () => void
-  onClearSelection: () => void
+  onUndo: () => void;
+  onRedo: () => void;
+  onSearch: () => void;
+  onDelete: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onFitView: () => void;
+  onClearSelection: () => void;
 }
 
 export function useFamilyTreeShortcuts(callbacks: ShortcutCallbacks) {
-  const { zoomIn, zoomOut, fitView, getNodes } = useReactFlow()
-  
+  const { zoomIn, zoomOut, fitView, getNodes } = useReactFlow();
+
   // Undo/Redo shortcuts
-  useHotkeys('ctrl+z, cmd+z', () => callbacks.onUndo())
-  useHotkeys('ctrl+shift+z, cmd+shift+z', () => callbacks.onRedo())
-  
+  useHotkeys("ctrl+z, cmd+z", () => callbacks.onUndo());
+  useHotkeys("ctrl+shift+z, cmd+shift+z", () => callbacks.onRedo());
+
   // Search shortcut
-  useHotkeys('ctrl+f, cmd+f', (e) => {
-    e.preventDefault()
-    callbacks.onSearch()
-  })
-  
+  useHotkeys("ctrl+f, cmd+f", (e) => {
+    e.preventDefault();
+    callbacks.onSearch();
+  });
+
   // Delete shortcut
-  useHotkeys('delete, backspace', () => {
-    const selectedNodes = getNodes().filter(node => node.selected)
+  useHotkeys("delete, backspace", () => {
+    const selectedNodes = getNodes().filter((node) => node.selected);
     if (selectedNodes.length > 0) {
-      callbacks.onDelete()
+      callbacks.onDelete();
     }
-  })
-  
+  });
+
   // Zoom shortcuts
-  useHotkeys('ctrl+=, cmd+=', () => {
-    zoomIn()
-    callbacks.onZoomIn()
-  })
-  useHotkeys('ctrl+0, cmd+0', () => {
-    fitView()
-    callbacks.onFitView()
-  })
-  
+  useHotkeys("ctrl+=, cmd+=", () => {
+    zoomIn();
+    callbacks.onZoomIn();
+  });
+  useHotkeys("ctrl+0, cmd+0", () => {
+    fitView();
+    callbacks.onFitView();
+  });
+
   // Escape to clear selection
-  useHotkeys('escape', () => callbacks.onClearSelection())
-  
+  useHotkeys("escape", () => callbacks.onClearSelection());
+
   // Space + drag handled by React Flow by default
 }
 ```
@@ -347,7 +350,7 @@ export function useTreeFilters(persons: Person[], filters: FilterState) {
           return false
         }
       }
-      
+
       // Year range filter
       if (filters.birthYears && person.date_of_birth) {
         const year = new Date(person.date_of_birth).getFullYear()
@@ -355,29 +358,29 @@ export function useTreeFilters(persons: Person[], filters: FilterState) {
           return false
         }
       }
-      
+
       // Location filter
       if (filters.locations?.length) {
         if (!filters.locations.includes(person.birth_place)) {
           return false
         }
       }
-      
+
       // Deceased filter
       if (filters.showDeceased === false && person.is_deceased) {
         return false
       }
-      
+
       // Gender filter
       if (filters.genders?.length && !filters.genders.includes(person.gender)) {
         return false
       }
-      
+
       // Photo filter
       if (filters.hasPhotos && !person.profile_photo) {
         return false
       }
-      
+
       return true
     })
   }, [persons, filters])
@@ -409,33 +412,33 @@ export function FilterPanel({ filters, onFilterChange }: Props) {
               </Button>
             </Sheet.Close>
           </div>
-          
+
           <div className="space-y-6">
-            <GenerationFilter 
-              value={filters.generations} 
-              onChange={(value) => onFilterChange({ ...filters, generations: value })} 
+            <GenerationFilter
+              value={filters.generations}
+              onChange={(value) => onFilterChange({ ...filters, generations: value })}
             />
-            <YearRangeFilter 
-              value={filters.birthYears} 
-              onChange={(value) => onFilterChange({ ...filters, birthYears: value })} 
+            <YearRangeFilter
+              value={filters.birthYears}
+              onChange={(value) => onFilterChange({ ...filters, birthYears: value })}
             />
-            <LocationFilter 
-              value={filters.locations} 
-              onChange={(value) => onFilterChange({ ...filters, locations: value })} 
+            <LocationFilter
+              value={filters.locations}
+              onChange={(value) => onFilterChange({ ...filters, locations: value })}
             />
-            <DeceasedToggle 
-              value={filters.showDeceased} 
-              onChange={(value) => onFilterChange({ ...filters, showDeceased: value })} 
+            <DeceasedToggle
+              value={filters.showDeceased}
+              onChange={(value) => onFilterChange({ ...filters, showDeceased: value })}
             />
-            <GenderFilter 
-              value={filters.genders} 
-              onChange={(value) => onFilterChange({ ...filters, genders: value })} 
+            <GenderFilter
+              value={filters.genders}
+              onChange={(value) => onFilterChange({ ...filters, genders: value })}
             />
           </div>
-          
+
           <div className="mt-6 pt-4 border-t">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => onFilterChange({})}
             >
@@ -481,7 +484,7 @@ export function PersonNode({ person, onEdit, onAddRelative, onDelete, onFocus }:
       <ContextMenu.Trigger asChild>
         <HoverCard.Root openDelay={300}>
           <HoverCard.Trigger asChild>
-            <div 
+            <div
               className={`
                 person-node p-3 rounded-lg border-2 cursor-pointer transition-all
                 ${person.selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
@@ -490,8 +493,8 @@ export function PersonNode({ person, onEdit, onAddRelative, onDelete, onFocus }:
             >
               <div className="flex items-center gap-3">
                 {person.profile_photo ? (
-                  <img 
-                    src={person.profile_photo} 
+                  <img
+                    src={person.profile_photo}
                     alt={person.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
@@ -511,17 +514,17 @@ export function PersonNode({ person, onEdit, onAddRelative, onDelete, onFocus }:
               </div>
             </div>
           </HoverCard.Trigger>
-          
+
           <HoverCard.Portal>
-            <HoverCard.Content 
+            <HoverCard.Content
               className="w-64 p-4 bg-white rounded-lg shadow-lg border"
               sideOffset={5}
             >
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   {person.profile_photo && (
-                    <img 
-                      src={person.profile_photo} 
+                    <img
+                      src={person.profile_photo}
                       alt={person.name}
                       className="w-16 h-16 rounded-full object-cover"
                     />
@@ -533,19 +536,19 @@ export function PersonNode({ person, onEdit, onAddRelative, onDelete, onFocus }:
                     </p>
                   </div>
                 </div>
-                
+
                 {person.occupation && (
                   <div className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-sm">
                     {person.occupation}
                   </div>
                 )}
-                
+
                 {person.biography && (
                   <p className="text-sm text-gray-600 line-clamp-3">
                     {person.biography}
                   </p>
                 )}
-                
+
                 <div className="text-xs text-gray-400 pt-2 border-t">
                   Double-click to focus • Right-click for options
                 </div>
@@ -554,36 +557,36 @@ export function PersonNode({ person, onEdit, onAddRelative, onDelete, onFocus }:
           </HoverCard.Portal>
         </HoverCard.Root>
       </ContextMenu.Trigger>
-      
+
       <ContextMenu.Portal>
         <ContextMenu.Content className="min-w-[180px] bg-white rounded-lg shadow-lg border p-1">
-          <ContextMenu.Item 
+          <ContextMenu.Item
             className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 cursor-pointer outline-none"
             onSelect={() => onEdit(person)}
           >
             <Edit className="w-4 h-4" />
             Edit Details
           </ContextMenu.Item>
-          
-          <ContextMenu.Item 
+
+          <ContextMenu.Item
             className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 cursor-pointer outline-none"
             onSelect={() => onAddRelative(person)}
           >
             <UserPlus className="w-4 h-4" />
             Add Relative
           </ContextMenu.Item>
-          
-          <ContextMenu.Item 
+
+          <ContextMenu.Item
             className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 cursor-pointer outline-none"
             onSelect={() => onFocus(person)}
           >
             <Target className="w-4 h-4" />
             Focus on This Person
           </ContextMenu.Item>
-          
+
           <ContextMenu.Separator className="h-px bg-gray-200 my-1" />
-          
-          <ContextMenu.Item 
+
+          <ContextMenu.Item
             className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-red-50 text-red-600 cursor-pointer outline-none"
             onSelect={() => {
               if (confirm(`Delete ${person.name} from family tree?`)) {

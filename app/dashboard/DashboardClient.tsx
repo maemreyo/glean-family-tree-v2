@@ -1,4 +1,3 @@
-// app/dashboard/DashboardClient.tsx
 'use client'
 
 import { usePersons, useCreatePerson, useDeletePerson } from '@/lib/supabase/queries'
@@ -7,14 +6,12 @@ import { useUIStore } from '@/providers/ui-store-provider'
 import { useDashboardParams } from '@/lib/hooks/use-dashboard-params'
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import type { Database } from '@/types/database.types'
 import type { PersonWithPhoto } from '@/types/app'
 import { RelationshipModal } from '@/components/RelationshipModal'
 import { PersonDetailSheet } from '@/components/PersonDetailSheet'
 import { TreeSkeleton } from '@/components/skeletons/TreeSkeleton'
 import { ListSkeleton } from '@/components/skeletons/ListSkeleton'
 import { EmptyState } from '@/components/EmptyState'
-import { seedMockData } from '@/lib/utils/seed'
 import { Trash2 } from 'lucide-react'
 
 const FamilyTree = dynamic(() => import('@/components/FamilyTree').then(mod => mod.FamilyTree), {

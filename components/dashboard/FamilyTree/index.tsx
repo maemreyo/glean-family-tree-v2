@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState } from 'react'
 import { Connection, addEdge, Node, ReactFlowInstance } from 'reactflow'
-import { useRelationships, useUpdatePerson, useCreateRelationship } from '@/lib/supabase/queries'
+import { useRelationships, useCreateRelationship } from '@/lib/supabase/queries'
 import { useUIStore } from '@/providers/ui-store-provider'
 import type { Database } from '@/types/database.types'
 import { PersonWithPhoto } from '@/types/app'
@@ -90,8 +90,9 @@ export function FamilyTree({
   )
 
   const handleAutoLayout = useCallback(async () => {
-    const { nodes: newNodes } = getLayoutedElements(nodes, edges)
+    const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges)
     setNodes(newNodes)
+    setEdges(newEdges)
 
     try {
       await batchSavePositions(newNodes)
@@ -100,7 +101,7 @@ export function FamilyTree({
       console.error('Failed to save layout:', error)
       toast.error('Failed to save layout')
     }
-  }, [nodes, edges, setNodes, batchSavePositions])
+  }, [nodes, edges, setNodes, setEdges, batchSavePositions])
 
   const onConnect = useCallback(
     (params: Connection) => {

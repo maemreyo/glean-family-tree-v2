@@ -2,7 +2,7 @@ import { useMemo, useRef, useEffect } from 'react'
 import { useNodesState, useEdgesState, Node, Edge, Position, MarkerType } from 'reactflow'
 import { PersonWithPhoto } from '@/types/app'
 import { Database } from '@/types/database.types'
-import { getLayoutedElements } from '../utils/dagre-layout'
+import { getLayoutedElements, syncSpouseData } from '../utils/dagre-layout'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
 
@@ -47,14 +47,12 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
 
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
     if (hasSavedPositions) {
-      return {
-        nodes: initialNodes.map((node) => ({
-          ...node,
-          targetPosition: Position.Top,
-          sourcePosition: Position.Bottom,
-        })),
-        edges: initialEdges,
-      }
+      const savedNodes = initialNodes.map((node) => ({
+        ...node,
+        targetPosition: Position.Top,
+        sourcePosition: Position.Bottom,
+      }))
+      return syncSpouseData(savedNodes, initialEdges)
     }
     return getLayoutedElements(initialNodes, initialEdges)
   }, [initialNodes, initialEdges, hasSavedPositions])

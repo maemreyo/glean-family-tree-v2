@@ -13,7 +13,7 @@ import ReactFlow, {
   ConnectionMode,
 } from 'reactflow'
 import { PersonNode } from './PersonNode'
-import { SpouseEdge } from './SpouseEdge'
+import { SpouseEdge, RelationshipEdge } from './SpouseEdge'
 
 const nodeTypes = {
   person: PersonNode,
@@ -21,6 +21,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   spouse: SpouseEdge,
+  relationship: RelationshipEdge,
 }
 
 interface FamilyTreeCanvasProps {

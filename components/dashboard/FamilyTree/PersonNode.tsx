@@ -1,13 +1,22 @@
+import type { MouseEvent } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { User, Heart } from 'lucide-react'
+import { User, Heart, X } from 'lucide-react'
 
-export function PersonNode({ data }: NodeProps) {
+export function PersonNode({ id, data }: NodeProps) {
   const profilePhoto = data.person_photos?.find((p: any) => p.is_profile_picture) || data.person_photos?.[0]
   const hasSpouses = data.spouseCount > 0
+
+  const handleDelete = (event: MouseEvent) => {
+    event.stopPropagation()
+    if (data?.readOnly) return
+    const confirmed = window.confirm('Are you sure you want to delete this person?')
+    if (!confirmed) return
+    data?.onDelete?.(id)
+  }
   
   return (
-    <div className="relative w-[200px]">
+    <div className="relative w-[200px] group">
       {/* Spouse indicator badge */}
       {hasSpouses && (
         <div className="absolute -top-2 -right-2 z-10">
@@ -25,6 +34,15 @@ export function PersonNode({ data }: NodeProps) {
       <div className={`flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-white p-2 shadow-sm transition-all hover:shadow-md dark:bg-gray-800 dark:border-gray-700 ${
         hasSpouses ? 'ring-2 ring-pink-200 dark:ring-pink-900/50' : ''
       }`}>
+        {!data?.readOnly && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="absolute -top-2 -left-2 h-5 w-5 rounded-full bg-white text-red-500 border shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
         <Handle 
           type="target" 
           position={Position.Top} 

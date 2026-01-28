@@ -1,8 +1,20 @@
 'use client'
 
-import React, { useCallback, useState } from 'react'
-import { Connection, addEdge, Node, ReactFlowInstance } from 'reactflow'
-import { useRelationships, useCreateRelationship } from '@/lib/supabase/queries'
+import React, { useCallback, useMemo, useState } from 'react'
+import {
+  Connection,
+  addEdge,
+  Node,
+  ReactFlowInstance,
+  OnNodesChange,
+  OnEdgesChange,
+} from 'reactflow'
+import {
+  useRelationships,
+  useCreateRelationship,
+  useDeletePerson,
+  useDeleteRelationship,
+} from '@/lib/supabase/queries'
 import { useUIStore } from '@/providers/ui-store-provider'
 import type { Database } from '@/types/database.types'
 import { PersonWithPhoto } from '@/types/app'
@@ -42,6 +54,8 @@ export function FamilyTree({
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
   const { mutate: createRelationship } = useCreateRelationship()
+  const { mutateAsync: deletePerson } = useDeletePerson()
+  const { mutateAsync: deleteRelationship } = useDeleteRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
 
   // Custom hooks
@@ -103,6 +117,37 @@ export function FamilyTree({
     }
   }, [nodes, edges, setNodes, setEdges, batchSavePositions])
 
+  const handleDeletePersonFromNode = useCallback(
+    async (personId: string) => {
+      if (readOnly) return
+      try {
+        await deletePerson({ id: personId, userId })
+        setEdges((eds) => eds.filter((edge) => edge.source !== personId && edge.target !== personId))
+        setNodes((nds) => nds.filter((node) => node.id !== personId))
+        toast.success('Person deleted')
+      } catch (error) {
+        console.error('Failed to delete person:', error)
+        toast.error('Failed to delete person')
+      }
+    },
+    [deletePerson, readOnly, setEdges, setNodes, userId]
+  )
+
+  const handleDeleteRelationshipFromEdge = useCallback(
+    async (relationshipId: string) => {
+      if (readOnly) return
+      try {
+        await deleteRelationship({ id: relationshipId, userId })
+        setEdges((eds) => eds.filter((edge) => edge.id !== relationshipId))
+        toast.success('Relationship deleted')
+      } catch (error) {
+        console.error('Failed to delete relationship:', error)
+        toast.error('Failed to delete relationship')
+      }
+    },
+    [deleteRelationship, readOnly, setEdges, userId]
+  )
+
   const onConnect = useCallback(
     (params: Connection) => {
       if (readOnly) return
@@ -125,6 +170,62 @@ export function FamilyTree({
     [setEdges, createRelationship, userId, readOnly]
   )
 
+  const handleNodesChange = useCallback<OnNodesChange>(
+    (changes) => {
+      if (readOnly) {
+        onNodesChange(changes.filter((change) => change.type !== 'remove'))
+        return
+      }
+
+      const removedIds = changes
+        .filter((change) => change.type === 'remove')
+        .map((change) => change.id)
+
+      if (removedIds.length > 0) {
+        removedIds.forEach(async (id) => {
+          try {
+            await deletePerson({ id, userId })
+            toast.success('Person deleted')
+          } catch (error) {
+            console.error('Failed to delete person:', error)
+            toast.error('Failed to delete person')
+          }
+        })
+      }
+
+      onNodesChange(changes)
+    },
+    [readOnly, onNodesChange, deletePerson, userId]
+  )
+
+  const handleEdgesChange = useCallback<OnEdgesChange>(
+    (changes) => {
+      if (readOnly) {
+        onEdgesChange(changes.filter((change) => change.type !== 'remove'))
+        return
+      }
+
+      const removedIds = changes
+        .filter((change) => change.type === 'remove')
+        .map((change) => change.id)
+
+      if (removedIds.length > 0) {
+        removedIds.forEach(async (id) => {
+          try {
+            await deleteRelationship({ id, userId })
+            toast.success('Relationship deleted')
+          } catch (error) {
+            console.error('Failed to delete relationship:', error)
+            toast.error('Failed to delete relationship')
+          }
+        })
+      }
+
+      onEdgesChange(changes)
+    },
+    [readOnly, onEdgesChange, deleteRelationship, userId]
+  )
+
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       openPersonModal(node.id)
@@ -132,13 +233,40 @@ export function FamilyTree({
     [openPersonModal]
   )
 
+  const nodesWithActions = useMemo(
+    () =>
+      nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onDelete: handleDeletePersonFromNode,
+          readOnly,
+        },
+      })),
+    [nodes, handleDeletePersonFromNode, readOnly]
+  )
+
+  const edgesWithActions = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        type: edge.data?.relationshipType === 'spouse' ? 'spouse' : 'relationship',
+        data: {
+          ...edge.data,
+          onDelete: handleDeleteRelationshipFromEdge,
+          readOnly,
+        },
+      })),
+    [edges, handleDeleteRelationshipFromEdge, readOnly]
+  )
+
   return (
     <>
       <FamilyTreeCanvas
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        nodes={nodesWithActions}
+        edges={edgesWithActions}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onNodeDrag={onNodeDrag}

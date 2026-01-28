@@ -153,7 +153,7 @@ export function PersonDetailSheet({ persons, userId, onAddRelative }: PersonDeta
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Button onClick={() => setIsEditing(true)}>
+                  <Button onClick={() => setIsEditing(true)} className="w-fit">
                     Edit Details
                   </Button>
                   <Button 
@@ -161,12 +161,13 @@ export function PersonDetailSheet({ persons, userId, onAddRelative }: PersonDeta
                     onClick={() => {
                       if (onAddRelative) onAddRelative()
                     }}
+                    className="w-fit"
                   >
                     Add Relative
                   </Button>
                   <Button
                     variant="ghost"
-                    className="gap-2"
+                    className="gap-2 w-fit"
                     onClick={() => {
                       router.push(`/dashboard/print/${person.id}`)
                     }}

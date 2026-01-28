@@ -15,6 +15,7 @@ import { TreeSkeleton } from '@/components/skeletons/TreeSkeleton'
 import { ListSkeleton } from '@/components/skeletons/ListSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { seedMockData } from '@/lib/utils/seed'
+import { Trash2 } from 'lucide-react'
 
 const FamilyTree = dynamic(() => import('@/components/FamilyTree').then(mod => mod.FamilyTree), {
   ssr: false,
@@ -340,7 +341,7 @@ export function DashboardClient({
                           className="rounded-md p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                           disabled={deletePerson.isPending}
                         >
-                          🗑️
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     </li>

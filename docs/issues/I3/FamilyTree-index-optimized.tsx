@@ -2,16 +2,18 @@
 
 import React, { useCallback, useState } from 'react'
 import { Connection, addEdge, Node, ReactFlowInstance } from 'reactflow'
-import { useRelationships, useUpdatePerson, useCreateRelationship } from '@/lib/supabase/queries'
+import { useRelationships } from '@/lib/supabase/queries'
 import { useUIStore } from '@/providers/ui-store-provider'
 import type { Database } from '@/types/database.types'
 import { PersonWithPhoto } from '@/types/app'
 import { useFamilyTreeLayout } from './hooks/useFamilyTreeLayout'
 import { useFamilyTreeExport } from './hooks/useFamilyTreeExport'
 import { useFamilyTreeImport } from './hooks/useFamilyTreeImport'
+import { usePositionManagement } from './hooks/usePositionManagement'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
 import { getLayoutedElements } from './utils/dagre-layout'
+import { toast } from 'sonner'
 import 'reactflow/dist/style.css'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
@@ -39,8 +41,6 @@ export function FamilyTree({
 
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
-  const { mutate: updatePerson } = useUpdatePerson()
-  const { mutate: createRelationship } = useCreateRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
 
   // Custom hooks
@@ -66,53 +66,57 @@ export function FamilyTree({
     triggerImportJson,
   } = useFamilyTreeImport({ userId })
 
-  // Handlers
+  const {
+    saveNodePosition,
+    batchSavePositions,
+  } = usePositionManagement({ readOnly })
+
+  // Handlers with optimistic updates
+  const onNodeDrag = useCallback(
+    (_: any, node: Node) => {
+      if (readOnly) return
+      
+      // Optimistic UI update (already handled by ReactFlow)
+      // Debounced DB save
+      saveNodePosition(node.id, node.position.x, node.position.y)
+    },
+    [saveNodePosition, readOnly]
+  )
+
   const onNodeDragStop = useCallback(
     (_: any, node: Node) => {
       if (readOnly) return
-      updatePerson({
-        id: node.id,
-        position_x: node.position.x,
-        position_y: node.position.y,
-      })
+      
+      // Final position is already in node from onNodeDrag
+      // Just ensure the debounced save happens
+      saveNodePosition(node.id, node.position.x, node.position.y)
     },
-    [updatePerson, readOnly]
+    [saveNodePosition, readOnly]
   )
 
-  const handleAutoLayout = useCallback(() => {
+  const handleAutoLayout = useCallback(async () => {
     const { nodes: newNodes } = getLayoutedElements(nodes, edges)
+    
+    // Optimistic UI update
     setNodes(newNodes)
 
-    // Save new positions
-    newNodes.forEach((node) => {
-      updatePerson({
-        id: node.id,
-        position_x: node.position.x,
-        position_y: node.position.y,
-      })
-    })
-  }, [nodes, edges, setNodes, updatePerson])
+    // Batch save positions to DB
+    try {
+      await batchSavePositions(newNodes)
+      toast.success('Layout saved')
+    } catch (error) {
+      console.error('Failed to save layout:', error)
+      toast.error('Failed to save layout')
+      // Optionally revert UI on error
+    }
+  }, [nodes, edges, setNodes, batchSavePositions])
 
   const onConnect = useCallback(
-    (params: Connection) => {
-      if (readOnly) return
-
-      // Optimistic update
+    (params: Connection) =>
       setEdges((eds) =>
         addEdge({ ...params, type: 'smoothstep', animated: true }, eds)
-      )
-
-      // Persist to Supabase
-      if (params.source && params.target) {
-        createRelationship({
-          user_id: userId,
-          from_person_id: params.source,
-          to_person_id: params.target,
-          relationship_type: 'parent', // Default to parent
-        })
-      }
-    },
-    [setEdges, createRelationship, userId, readOnly]
+      ),
+    [setEdges]
   )
 
   const onNodeClick = useCallback(
@@ -131,6 +135,7 @@ export function FamilyTree({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onInit={setRfInstance}
       >

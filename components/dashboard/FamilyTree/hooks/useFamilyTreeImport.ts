@@ -51,8 +51,8 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
           newRelationships.push({
             id: crypto.randomUUID(),
             user_id: userId,
-            parent_id: husbId,
-            child_id: wifeId,
+            from_person_id: husbId,
+            to_person_id: wifeId,
             relationship_type: 'spouse',
             created_at: new Date().toISOString()
           })
@@ -66,8 +66,8 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
               newRelationships.push({
                 id: crypto.randomUUID(),
                 user_id: userId,
-                parent_id: parentId,
-                child_id: childId,
+                from_person_id: parentId,
+                to_person_id: childId,
                 relationship_type: 'parent',
                 created_at: new Date().toISOString()
               })
@@ -150,8 +150,8 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
       const relationshipsPayload = relationshipsData.map((relationship: any) => ({
         id: relationship.id,
         user_id: userId,
-        parent_id: relationship.parent_id,
-        child_id: relationship.child_id,
+        from_person_id: relationship.from_person_id ?? relationship.parent_id,
+        to_person_id: relationship.to_person_id ?? relationship.child_id,
         relationship_type: relationship.relationship_type,
         created_at: relationship.created_at ?? now,
       }))

@@ -56,14 +56,14 @@ export default async function PrintProfilePage({
   const { data: relationships } = await supabase
     .from('relationships')
     .select('*')
-    .or(`parent_id.eq.${personId},child_id.eq.${personId}`)
+    .or(`from_person_id.eq.${personId},to_person_id.eq.${personId}`)
 
   // To get the names of related people, we need to fetch them.
   // Collect all related IDs
   const relatedIds = new Set<string>()
   relationships?.forEach((r) => {
-    if (r.parent_id !== personId) relatedIds.add(r.parent_id)
-    if (r.child_id !== personId) relatedIds.add(r.child_id)
+    if (r.from_person_id !== personId) relatedIds.add(r.from_person_id)
+    if (r.to_person_id !== personId) relatedIds.add(r.to_person_id)
   })
 
   let relatedPersons: Person[] = []
@@ -81,17 +81,17 @@ export default async function PrintProfilePage({
 
   relationships?.forEach((r) => {
     if (r.relationship_type === 'spouse') {
-        const spouseId = r.parent_id === personId ? r.child_id : r.parent_id
+        const spouseId = r.from_person_id === personId ? r.to_person_id : r.from_person_id
         const spouse = relatedPersons.find(p => p.id === spouseId)
         if (spouse) familyMembers.push({ related_person: spouse, type: 'spouse' })
     } else if (r.relationship_type === 'parent') {
-        if (r.child_id === personId) {
-            // This relationship means r.parent_id is the PARENT of current person
-            const parent = relatedPersons.find(p => p.id === r.parent_id)
+        if (r.to_person_id === personId) {
+            // This relationship means r.from_person_id is the PARENT of current person
+            const parent = relatedPersons.find(p => p.id === r.from_person_id)
             if (parent) familyMembers.push({ related_person: parent, type: 'parent' })
         } else {
-             // This relationship means r.parent_id is the current person, so r.child_id is the CHILD
-             const child = relatedPersons.find(p => p.id === r.child_id)
+             // This relationship means r.from_person_id is the current person, so r.to_person_id is the CHILD
+             const child = relatedPersons.find(p => p.id === r.to_person_id)
              if (child) familyMembers.push({ related_person: child, type: 'child' })
         }
     }

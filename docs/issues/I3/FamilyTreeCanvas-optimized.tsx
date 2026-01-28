@@ -24,6 +24,7 @@ interface FamilyTreeCanvasProps {
   onEdgesChange: OnEdgesChange
   onConnect: (connection: Connection) => void
   onNodeClick: (event: React.MouseEvent, node: Node) => void
+  onNodeDrag?: NodeDragHandler
   onNodeDragStop: NodeDragHandler
   onInit: (instance: ReactFlowInstance) => void
   children?: React.ReactNode
@@ -36,6 +37,7 @@ export function FamilyTreeCanvas({
   onEdgesChange,
   onConnect,
   onNodeClick,
+  onNodeDrag,
   onNodeDragStop,
   onInit,
   children,
@@ -49,11 +51,11 @@ export function FamilyTreeCanvas({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onInit={onInit}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.3 }}
       >
         <Controls />
         <MiniMap />

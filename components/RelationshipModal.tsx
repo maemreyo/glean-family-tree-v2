@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -42,14 +41,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type Person = Database['public']['Tables']['persons']['Row']
 
 const formSchema = z.object({
-  type: z.enum(['parent-child', 'spouse']),
-  parentId: z.string().min(1, 'Please select a parent'),
-  childId: z.string().min(1, 'Please select a child'),
+  type: z.enum(['parent', 'spouse']),
+  fromPersonId: z.string().min(1, 'Please select a parent'),
+  toPersonId: z.string().min(1, 'Please select a child'),
 })
 
 interface RelationshipModalProps {
@@ -65,7 +64,7 @@ export function RelationshipModal({
   persons,
   userId,
 }: RelationshipModalProps) {
-  const [activeTab, setActiveTab] = useState<'parent-child' | 'spouse'>('parent-child')
+  const [activeTab, setActiveTab] = useState<'parent' | 'spouse'>('parent')
   const createRelationship = useCreateRelationship()
   const { data: relationships = [] } = useRelationships(userId)
   const showToast = useUIStore((state) => state.showToast)
@@ -73,9 +72,9 @@ export function RelationshipModal({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: 'parent-child',
-      parentId: '',
-      childId: '',
+      type: 'parent',
+      fromPersonId: '',
+      toPersonId: '',
     },
   })
 
@@ -83,7 +82,7 @@ export function RelationshipModal({
     const validator = new RelationshipValidator(relationships, persons)
 
     if (values.type === 'spouse') {
-      const validation = validator.validateSpouse(values.parentId, values.childId)
+      const validation = validator.validateSpouse(values.fromPersonId, values.toPersonId)
       
       if (!validation.valid) {
         showToast(validation.error || 'Invalid spouse relationship', 'error')
@@ -92,8 +91,8 @@ export function RelationshipModal({
 
       try {
         await createRelationship.mutateAsync({
-          parent_id: values.parentId,
-          child_id: values.childId,
+          from_person_id: values.fromPersonId,
+          to_person_id: values.toPersonId,
           user_id: userId,
           relationship_type: 'spouse',
         })
@@ -107,7 +106,7 @@ export function RelationshipModal({
       return
     }
 
-    const validation = validator.validateParentChild(values.parentId, values.childId)
+    const validation = validator.validateParentChild(values.fromPersonId, values.toPersonId)
 
     if (!validation.valid) {
       showToast(validation.error || 'Invalid relationship', 'error')
@@ -116,8 +115,8 @@ export function RelationshipModal({
 
     try {
       await createRelationship.mutateAsync({
-        parent_id: values.parentId,
-        child_id: values.childId,
+        from_person_id: values.fromPersonId,
+        to_person_id: values.toPersonId,
         user_id: userId,
         relationship_type: 'parent',
       })
@@ -133,7 +132,11 @@ export function RelationshipModal({
   // Reset form when modal closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      form.reset()
+      form.reset({
+        type: 'parent',
+        fromPersonId: '',
+        toPersonId: '',
+      })
       onClose()
     }
   }
@@ -149,11 +152,12 @@ export function RelationshipModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => {
-          setActiveTab(v as any)
-          form.setValue('type', v as any)
+          const type = v as 'parent' | 'spouse'
+          setActiveTab(type)
+          form.setValue('type', type)
         }}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="parent-child">Parent-Child</TabsTrigger>
+            <TabsTrigger value="parent">Parent-Child</TabsTrigger>
             <TabsTrigger value="spouse">Spouse</TabsTrigger>
           </TabsList>
           
@@ -162,7 +166,7 @@ export function RelationshipModal({
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="parentId"
+                  name="fromPersonId" 
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>{activeTab === 'spouse' ? 'Partner 1' : 'Parent'}</FormLabel>
@@ -197,7 +201,7 @@ export function RelationshipModal({
                                     value={person.name}
                                     key={person.id}
                                     onSelect={() => {
-                                      form.setValue("parentId", person.id)
+                                      form.setValue("fromPersonId", person.id)
                                     }}
                                   >
                                     <Check
@@ -223,7 +227,7 @@ export function RelationshipModal({
 
                 <FormField
                   control={form.control}
-                  name="childId"
+                  name="toPersonId"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>{activeTab === 'spouse' ? 'Partner 2' : 'Child'}</FormLabel>
@@ -258,7 +262,7 @@ export function RelationshipModal({
                                     value={person.name}
                                     key={person.id}
                                     onSelect={() => {
-                                      form.setValue("childId", person.id)
+                                      form.setValue("toPersonId", person.id)
                                     }}
                                   >
                                     <Check

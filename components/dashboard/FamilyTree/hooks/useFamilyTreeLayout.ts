@@ -34,8 +34,8 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
       const isSpouse = rel.relationship_type === 'spouse'
       return {
         id: rel.id,
-        source: rel.parent_id,
-        target: rel.child_id,
+        source: rel.from_person_id,
+        target: rel.to_person_id,
         type: isSpouse ? 'straight' : 'smoothstep',
         animated: !isSpouse,
         style: isSpouse ? { stroke: '#ec4899', strokeWidth: 2 } : undefined,

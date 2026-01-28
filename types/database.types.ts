@@ -91,46 +91,46 @@ export type Database = {
       }
       relationships: {
         Row: {
-          child_id: string
           created_at: string
           id: string
-          parent_id: string
+          to_person_id: string
+          from_person_id: string
           relationship_type: string
           user_id: string
         }
         Insert: {
-          child_id: string
           created_at?: string
           id?: string
-          parent_id: string
+          to_person_id: string
+          from_person_id: string
           relationship_type?: string
           user_id: string
         }
         Update: {
-          child_id?: string
+          to_person_id?: string
           created_at?: string
           id?: string
-          parent_id?: string
+          from_person_id?: string
           relationship_type?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "relationships_child_id_fkey"
-            columns: ["child_id"]
+            foreignKeyName: "relationships_to_person_id_fkey"
+            columns: ["to_person_id"]
             isOneToOne: false
             referencedRelation: "persons"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "relationships_parent_id_fkey"
-            columns: ["parent_id"]
+            foreignKeyName: "relationships_from_person_id_fkey"
+            columns: ["from_person_id"]
             isOneToOne: false
             referencedRelation: "persons"
             referencedColumns: ["id"]
           },
         ]
-      }
+      },
       person_photos: {
         Row: {
           created_at: string

@@ -116,18 +116,18 @@ export function generateGedcom(persons: Person[], relationships: Relationship[])
 
   // 1. Process Spouses
   relationships.filter(r => r.relationship_type === 'spouse').forEach(r => {
-     getOrCreateFamily(r.parent_id, r.child_id)
+     getOrCreateFamily(r.from_person_id, r.to_person_id)
   })
 
   // 2. Process Children
   // Group children by parents first
   const childToParents = new Map<string, string[]>()
   relationships.filter(r => r.relationship_type === 'parent-child').forEach(r => {
-    const parents = childToParents.get(r.child_id) || []
-    if (!parents.includes(r.parent_id)) {
-        parents.push(r.parent_id)
+    const parents = childToParents.get(r.to_person_id) || []
+    if (!parents.includes(r.from_person_id)) {
+        parents.push(r.from_person_id)
     }
-    childToParents.set(r.child_id, parents)
+    childToParents.set(r.to_person_id, parents)
   })
 
   childToParents.forEach((parentIds, childId) => {

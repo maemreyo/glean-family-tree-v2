@@ -39,13 +39,13 @@ export function PersonDetailSheet({ persons, userId, onAddRelative }: PersonDeta
   const spouseRelationship = relationships?.find(
     (r) =>
       r.relationship_type === 'spouse' &&
-      (r.parent_id === selectedPersonId || r.child_id === selectedPersonId)
+      (r.from_person_id === selectedPersonId || r.to_person_id === selectedPersonId)
   )
 
   const spouseId = spouseRelationship
-    ? spouseRelationship.parent_id === selectedPersonId
-      ? spouseRelationship.child_id
-      : spouseRelationship.parent_id
+    ? spouseRelationship.from_person_id === selectedPersonId
+      ? spouseRelationship.to_person_id
+      : spouseRelationship.from_person_id
     : null
 
   const spouse = spouseId ? persons.find((p) => p.id === spouseId) : null

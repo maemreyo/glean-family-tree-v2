@@ -54,15 +54,15 @@ export async function seedMockData(userId: string) {
     const relationships: RelationshipInsert[] = []
 
     // Grandparents -> Dad (Assuming John & Mary are Robert's parents)
-    relationships.push({ parent_id: grandparents[0].id, child_id: parents[0].id, user_id: userId })
-    relationships.push({ parent_id: grandparents[1].id, child_id: parents[0].id, user_id: userId })
+  relationships.push({ from_person_id: grandparents[0].id, to_person_id: parents[0].id, user_id: userId, relationship_type: 'parent' })
+  relationships.push({ from_person_id: grandparents[1].id, to_person_id: parents[0].id, user_id: userId, relationship_type: 'parent' })
 
-    // Parents -> Children
-    parents.forEach(parent => {
-      children.forEach(child => {
-        relationships.push({ parent_id: parent.id, child_id: child.id, user_id: userId })
-      })
+  // Parents -> Children
+  parents.forEach(parent => {
+    children.forEach(child => {
+      relationships.push({ from_person_id: parent.id, to_person_id: child.id, user_id: userId, relationship_type: 'parent' })
     })
+  })
 
     const { error: relError } = await supabase
       .from('relationships')

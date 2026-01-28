@@ -618,7 +618,16 @@ Phase 1 được đề xuất tập trung vào core functionality với thời g
 
 Virtual rendering và performance optimization là ưu tiên hàng đầu với mục tiêu 60fps với 500 nodes stable. Keyboard shortcuts cho navigation và common actions sẽ bao gồm Space+drag, Ctrl+Z, Ctrl+F, Delete và Escape. Enhanced mini-map với click-to-jump và drag-to-pan sẽ được implement. Loading states và skeleton UI giúp perceived performance tốt hơn. Basic filtering với generation, deceased và gender filters sẽ được thêm. Hover card preview cho person information và context menu cho node actions cũng là phần của phase này.
 
-Dependencies cần cài đặt bao gồm `@reactflow/core`, `@reactflow/react`, `react-hotkeys-hook`, `@radix-ui/react-context-menu`, `@radix-ui/react-hover-card`, `lucide-react`, `date-fns` và `clsx`.
+Dependencies cần cài đặt bổ sung bao gồm `react-hotkeys-hook`, `@radix-ui/react-context-menu`, `@radix-ui/react-hover-card` (stack hiện tại đã có `reactflow`, `lucide-react`, `date-fns`, `clsx`).
+
+**Implementation detail Phase 1**
+- Virtual rendering: culling nodes/edges ngoài viewport + margin, có toggle theo ngưỡng số lượng nodes.
+- Performance budget: đo FPS, render time, memory; tối thiểu log runtime cho các actions nặng.
+- Keyboard shortcuts: dùng react-hotkeys-hook, map các phím Space+drag, Ctrl+Z, Ctrl+F, Delete, Escape.
+- Mini-map: enable click-to-jump, drag-to-pan; đồng bộ màu theo node type.
+- Loading states: skeleton cho tree load và action feedback.
+- Basic filtering: generation, deceased, gender, ảnh hưởng cả nodes và edges.
+- Hover card + context menu: dùng Radix, đảm bảo focus/keyboard accessible, delay hover card 300ms.
 
 ### 7.2 Phase 2 (Dựa Trên User Data)
 
@@ -628,6 +637,13 @@ Nếu user data cho thấy nhu cầu, hãy implement visual filtering nâng cao 
 
 Dependencies thêm bao gồm `recharts` và các components Radix UI bổ sung.
 
+**Implementation detail Phase 2**
+- Advanced filtering: year ranges, locations; cần schema cho filter criteria và caching kết quả.
+- Statistics panel: dashboard panel lazy-load, dựa trên selectors compute từ data hiện có.
+- Undo/redo: dùng history stack ở store, giới hạn depth, batch actions cho drag/layout.
+- Color coding system: chuẩn hóa token cho status/roles; update UI components đồng bộ.
+- Layout switcher: refactor layout function để hỗ trợ direction TB/LR, giữ compatibility.
+
 ### 7.3 Phase 3 (Nếu Cần Thiết)
 
 Phase 3 chỉ thực hiện khi có clear user demand và data quality là issue:
@@ -635,6 +651,12 @@ Phase 3 chỉ thực hiện khi có clear user demand và data quality là issue
 Auto-detect relationships với simple rules-based approach. Duplicate detection nếu data quality metrics cho thấy problem. Advanced validation rules dựa trên common issues found. Timeline view nếu users need chronological perspective.
 
 **Lưu ý quan trọng:** Không implement force-directed layout trừ khi có clear user demand. Radial layout có thể implement đơn giản hơn nếu cần.
+
+**Implementation detail Phase 3**
+- Auto-detect relationships: rules-based, require manual confirm, log acceptance rate.
+- Duplicate detection: hashing theo name + DOB + parents, surfacing potential duplicates.
+- Advanced validation: rule engine đơn giản, hiển thị errors/warnings inline.
+- Timeline view: route riêng, lazy-load component, reuse date-fns for bucketing.
 
 ## 8. Các Phần Bổ Sung Quan Trọng
 
@@ -686,13 +708,44 @@ Về Accessibility: Sử dụng Radix UI components đảm bảo WCAG compliance
 
 ### 9.4 Kế Hoạch Hành Động
 
-Tuần 1-2 tập trung vào Foundation và gồm setup project structure, implement React Flow basic integration, và virtual rendering core.
+Tuần 1-2 (Foundation)
+- Define performance budget và baseline metrics (FPS, render time).
+- Implement viewport culling cho nodes/edges và ngưỡng bật/tắt theo node count.
+- Chuẩn hóa API nội bộ để bật/tắt virtualization.
 
-Tuần 3-4 tập trung vào User Experience với keyboard shortcuts, loading states, enhanced mini-map, và basic filtering.
+Tuần 3-4 (User Experience)
+- Keyboard shortcuts cho navigation và actions cơ bản.
+- Loading states và skeleton cho tree load và actions nặng.
+- Enhanced mini-map với click-to-jump và drag-to-pan.
+- Basic filtering (generation, deceased, gender) áp dụng cho nodes/edges.
 
-Tuần 5-6 tập trung vào Interactions với context menu, hover cards, focus functionality, và color coding.
+Tuần 5-6 (Interactions)
+- Hover card preview và context menu theo Radix.
+- Focus functionality (setCenter) và visual feedback.
+- Color coding system theo token chung.
 
-Sau tuần 6, deploy to staging và gather feedback. Analyze telemetry data. Plan Phase 2 based on actual user needs và usage patterns.
+Sau tuần 6
+- Deploy staging, đo telemetry, và chốt scope Phase 2 theo usage data.
+
+### 9.6 Implementation Plan
+
+Phase 1
+- Virtual rendering: thêm culling logic trong FamilyTreeCanvas và hooks layout.
+- Shortcuts: tạo hook keyboard và binding trong FamilyTree root.
+- Mini-map: cập nhật props và theme cho minimap.
+- Filtering: thêm filter state, selectors, và apply vào nodes/edges trước render.
+- Hover/Context: mở rộng PersonNode để dùng Radix components.
+
+Phase 2
+- Advanced filters: mở rộng model filter, cache kết quả, UI panel mở rộng.
+- Statistics panel: lazy-load component, compute metrics từ data hiện có.
+- Undo/redo: history stack ở store, batch actions cho drag/layout.
+- Layout switcher: refactor getLayoutedElements để hỗ trợ TB/LR.
+
+Phase 3
+- Auto-detect: rules-based engine, logging acceptance rate.
+- Duplicate detection: fingerprint theo name/DOB/parents, hiển thị suggestions.
+- Timeline view: page/route riêng, reuse date-fns, lazy-load chart.
 
 ### 9.5 Tổng Kết
 

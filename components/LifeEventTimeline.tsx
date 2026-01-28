@@ -22,8 +22,10 @@ import {
   useLifeEvents,
   useCreateLifeEvent,
   useDeleteLifeEvent,
+  usePersonPhotos,
 } from '@/lib/supabase/queries'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 // Schema for adding a life event
 const eventSchema = z.object({
@@ -46,6 +48,7 @@ interface LifeEventTimelineProps {
 export function LifeEventTimeline({ personId, userId, className }: LifeEventTimelineProps) {
   const [isAdding, setIsAdding] = useState(false)
   const { data: events, isLoading } = useLifeEvents(personId)
+  const { data: photos } = usePersonPhotos(personId)
   const createEvent = useCreateLifeEvent()
   const deleteEvent = useDeleteLifeEvent()
 
@@ -139,8 +142,33 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="event_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <FormControl>
+                        <select
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="generic">Life event</option>
+                          <option value="birth">Birth</option>
+                          <option value="death">Death</option>
+                          <option value="marriage">Marriage</option>
+                          <option value="career">Career</option>
+                          <option value="story">Story</option>
+                          <option value="tradition">Tradition</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="date"
@@ -306,6 +334,12 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
                   </p>
                 )}
 
+                {event.event_type && event.event_type !== 'generic' && (
+                  <div className="text-xs text-muted-foreground">
+                    Type: <span className="capitalize">{event.event_type}</span>
+                  </div>
+                )}
+
                 {(event.confidence_level || event.source_url || event.source_notes) && (
                   <div className="text-xs text-muted-foreground mt-1 space-y-1">
                     {event.confidence_level && (
@@ -325,6 +359,24 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
                     )}
                   </div>
                 )}
+
+                {photos?.filter(p => p.life_event_id === event.id).length ? (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {photos
+                      .filter(p => p.life_event_id === event.id)
+                      .map(photo => (
+                        <div key={photo.id} className="relative h-16 w-16 overflow-hidden rounded-md border">
+                          <Image
+                            src={photo.url}
+                            alt={`Photo associated with ${event.title}`}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           ))

@@ -316,10 +316,12 @@ export function useUploadPhoto() {
       file,
       personId,
       userId,
+      lifeEventId,
     }: {
       file: File
       personId: string
       userId: string
+      lifeEventId?: string | null
     }) => {
       const fileExt = file.name.split('.').pop()
       const fileName = `${Math.random()}.${fileExt}`
@@ -342,6 +344,7 @@ export function useUploadPhoto() {
           url: publicUrl,
           user_id: userId,
           is_profile_picture: false,
+          life_event_id: lifeEventId,
         })
         .select()
         .single()
@@ -355,6 +358,29 @@ export function useUploadPhoto() {
       })
       queryClient.invalidateQueries({
         queryKey: queryKeys.persons.byUser(_.user_id),
+      })
+    },
+  })
+}
+
+export function useUpdatePhoto() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; description?: string | null; life_event_id?: string | null }) => {
+      const { data, error } = await supabase
+        .from('person_photos')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: (updatedPhoto) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.photos.byPerson(updatedPhoto.person_id),
       })
     },
   })

@@ -140,6 +140,7 @@ export type Database = {
           person_id: string
           url: string
           user_id: string
+          life_event_id: string | null
         }
         Insert: {
           created_at?: string
@@ -149,6 +150,7 @@ export type Database = {
           person_id: string
           url: string
           user_id: string
+          life_event_id?: string | null
         }
         Update: {
           created_at?: string
@@ -158,8 +160,16 @@ export type Database = {
           person_id?: string
           url?: string
           user_id?: string
+          life_event_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "person_photos_life_event_id_fkey"
+            columns: ["life_event_id"]
+            isOneToOne: false
+            referencedRelation: "life_events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "person_photos_person_id_fkey"
             columns: ["person_id"]

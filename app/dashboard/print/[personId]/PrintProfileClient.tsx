@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
-import { ArrowLeft, Printer, User } from 'lucide-react'
+import { ArrowLeft, Printer, User, Baby, Heart, Briefcase, GraduationCap, Star, Scroll, Calendar, MapPin } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database.types'
 
@@ -45,6 +45,31 @@ export function PrintProfileClient({ person, lifeEvents, familyMembers }: PrintP
   const getYear = (dateString: string | null) => {
     if (!dateString) return '?'
     return new Date(dateString).getFullYear()
+  }
+
+  const getEventIcon = (type: string | null) => {
+    switch (type) {
+      case 'birth': return <Baby className="h-4 w-4 text-white" />
+      case 'death': return <div className="h-4 w-4 text-white flex items-center justify-center font-bold">†</div>
+      case 'marriage': return <Heart className="h-4 w-4 text-white" />
+      case 'career': return <Briefcase className="h-4 w-4 text-white" />
+      case 'education': return <GraduationCap className="h-4 w-4 text-white" />
+      case 'story': return <Star className="h-4 w-4 text-white" />
+      case 'tradition': return <Scroll className="h-4 w-4 text-white" />
+      default: return <Calendar className="h-4 w-4 text-white" />
+    }
+  }
+
+  const getEventColor = (type: string | null) => {
+    switch (type) {
+      case 'birth': return 'bg-blue-500 border-blue-500'
+      case 'death': return 'bg-gray-800 border-gray-800'
+      case 'marriage': return 'bg-pink-500 border-pink-500'
+      case 'career': return 'bg-amber-600 border-amber-600'
+      case 'story': return 'bg-purple-500 border-purple-500'
+      case 'tradition': return 'bg-emerald-600 border-emerald-600'
+      default: return 'bg-gray-400 border-gray-400'
+    }
   }
 
   return (
@@ -117,7 +142,83 @@ export function PrintProfileClient({ person, lifeEvents, familyMembers }: PrintP
           </div>
         )}
 
-        {/* Family Section */}
+        {/* Family Chart Section */}
+        <div className="mb-8 border-b pb-8 print:break-inside-avoid">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 border-l-4 border-primary pl-3">Family Chart</h2>
+          
+          <div className="flex flex-col items-center gap-8 py-4">
+            {/* Generation 1: Parents */}
+            <div className="flex justify-center gap-12 relative">
+              {parents.length > 0 ? (
+                parents.map((p, i) => (
+                  <div key={i} className="flex flex-col items-center">
+                    <div className="w-32 p-3 border rounded-lg bg-gray-50 text-center shadow-sm print:shadow-none print:border-gray-300">
+                      <p className="font-semibold text-sm truncate">{p.related_person.name}</p>
+                      <p className="text-xs text-gray-500">Parent</p>
+                    </div>
+                    {/* Connector down */}
+                    <div className="h-8 w-px bg-gray-300"></div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-400 text-sm italic p-4 border border-dashed rounded">Unknown Parents</div>
+              )}
+            </div>
+
+            {/* Generation 2: Person + Spouses */}
+            <div className="flex justify-center items-start gap-8 relative">
+              {/* The Person */}
+              <div className="flex flex-col items-center relative z-10">
+                {/* Connector up (to parents) - simplified, just a top line if parents exist */}
+                {parents.length > 0 && <div className="absolute -top-8 h-8 w-px bg-gray-300"></div>}
+                
+                <div className="w-40 p-4 border-2 border-primary rounded-xl bg-white text-center shadow-md print:shadow-none print:border-gray-800">
+                  <p className="font-bold text-gray-900">{person.name}</p>
+                  <p className="text-xs text-gray-500">{formatDate(person.date_of_birth)}</p>
+                </div>
+                
+                {/* Connector down (to children) */}
+                {children.length > 0 && <div className="h-8 w-px bg-gray-300"></div>}
+              </div>
+
+              {/* Spouses */}
+              {spouses.map((s, i) => (
+                <div key={i} className="flex flex-col items-center mt-4">
+                  <div className="w-32 p-3 border rounded-lg bg-gray-50 text-center shadow-sm print:shadow-none print:border-gray-300">
+                    <p className="font-semibold text-sm truncate">{s.related_person.name}</p>
+                    <p className="text-xs text-gray-500">Spouse</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Generation 3: Children */}
+            {children.length > 0 && (
+              <div className="relative pt-4 w-full">
+                 {/* Horizontal connector bar */}
+                <div className="absolute top-0 left-10 right-10 h-px bg-gray-300"></div>
+                {/* Vertical connector from Gen 2 */}
+                <div className="absolute top-[-32px] left-1/2 -translate-x-1/2 h-8 w-px bg-gray-300"></div>
+                
+                <div className="flex flex-wrap justify-center gap-4">
+                  {children.map((c, i) => (
+                    <div key={i} className="flex flex-col items-center pt-4 relative">
+                       {/* Connector up to horizontal bar */}
+                      <div className="absolute top-0 h-4 w-px bg-gray-300"></div>
+                      
+                      <div className="w-28 p-2 border rounded-lg bg-gray-50 text-center shadow-sm print:shadow-none print:border-gray-300">
+                        <p className="font-semibold text-xs truncate">{c.related_person.name}</p>
+                        <p className="text-[10px] text-gray-500">{getYear(c.related_person.date_of_birth)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* List-based Family Section (keeping as detail view) */}
         <div className="mb-8 border-b pb-8 print:break-inside-avoid">
           <h2 className="text-2xl font-bold mb-6 text-gray-800 border-l-4 border-primary pl-3">Family</h2>
           
@@ -185,7 +286,9 @@ export function PrintProfileClient({ person, lifeEvents, familyMembers }: PrintP
             <div className="relative border-l-2 border-gray-200 ml-3 space-y-8">
               {lifeEvents.map((event, index) => (
                 <div key={index} className="relative pl-8">
-                  <div className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-gray-300"></div>
+                  <div className={`absolute -left-[11px] top-1 h-6 w-6 rounded-full border-2 flex items-center justify-center shadow-sm print:shadow-none ${getEventColor(event.event_type)}`}>
+                    {getEventIcon(event.event_type)}
+                  </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-1">
                     <h4 className="text-lg font-semibold text-gray-900">{event.title}</h4>
                     <span className="text-sm font-medium text-gray-500">{formatDate(event.date)}</span>
@@ -195,7 +298,7 @@ export function PrintProfileClient({ person, lifeEvents, familyMembers }: PrintP
                   )}
                   {event.location && (
                     <p className="text-gray-500 text-xs mt-1 flex items-center">
-                      📍 {event.location}
+                      <MapPin className="h-3 w-3 mr-1" /> {event.location}
                     </p>
                   )}
                 </div>

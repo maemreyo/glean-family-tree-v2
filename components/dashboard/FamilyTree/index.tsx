@@ -9,9 +9,11 @@ import { PersonWithPhoto } from '@/types/app'
 import { useFamilyTreeLayout } from './hooks/useFamilyTreeLayout'
 import { useFamilyTreeExport } from './hooks/useFamilyTreeExport'
 import { useFamilyTreeImport } from './hooks/useFamilyTreeImport'
+import { usePositionManagement } from './hooks/usePositionManagement'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
 import { getLayoutedElements } from './utils/dagre-layout'
+import { toast } from 'sonner'
 import 'reactflow/dist/style.css'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
@@ -39,7 +41,6 @@ export function FamilyTree({
 
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
-  const { mutate: updatePerson } = useUpdatePerson()
   const { mutate: createRelationship } = useCreateRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
 
@@ -66,32 +67,40 @@ export function FamilyTree({
     triggerImportJson,
   } = useFamilyTreeImport({ userId })
 
+  const {
+    saveNodePosition,
+    batchSavePositions,
+  } = usePositionManagement({ readOnly })
+
   // Handlers
+  const onNodeDrag = useCallback(
+    (_: any, node: Node) => {
+      if (readOnly) return
+      saveNodePosition(node.id, node.position.x, node.position.y)
+    },
+    [saveNodePosition, readOnly]
+  )
+
   const onNodeDragStop = useCallback(
     (_: any, node: Node) => {
       if (readOnly) return
-      updatePerson({
-        id: node.id,
-        position_x: node.position.x,
-        position_y: node.position.y,
-      })
+      saveNodePosition(node.id, node.position.x, node.position.y)
     },
-    [updatePerson, readOnly]
+    [saveNodePosition, readOnly]
   )
 
-  const handleAutoLayout = useCallback(() => {
+  const handleAutoLayout = useCallback(async () => {
     const { nodes: newNodes } = getLayoutedElements(nodes, edges)
     setNodes(newNodes)
 
-    // Save new positions
-    newNodes.forEach((node) => {
-      updatePerson({
-        id: node.id,
-        position_x: node.position.x,
-        position_y: node.position.y,
-      })
-    })
-  }, [nodes, edges, setNodes, updatePerson])
+    try {
+      await batchSavePositions(newNodes)
+      toast.success('Layout saved')
+    } catch (error) {
+      console.error('Failed to save layout:', error)
+      toast.error('Failed to save layout')
+    }
+  }, [nodes, edges, setNodes, batchSavePositions])
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -131,6 +140,7 @@ export function FamilyTree({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onInit={setRfInstance}
       >

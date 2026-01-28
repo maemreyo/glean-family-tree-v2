@@ -125,7 +125,31 @@ export function syncSpouseData(nodes: Node[], edges: Edge[]) {
   // Ensure direction is always Left -> Right to match handles
   const updatedEdges = edges.map((edge) => {
     const isSpouse = edge.data?.relationshipType === 'spouse'
-    if (!isSpouse) return edge
+    if (!isSpouse) {
+      const sharedChild = edge.data?.sharedChild && Array.isArray(edge.data?.spousePair)
+      if (sharedChild) {
+        const [parentA, parentB] = edge.data.spousePair as [string, string]
+        const nodeA = nodesWithSpouseData.find(n => n.id === parentA)
+        const nodeB = nodesWithSpouseData.find(n => n.id === parentB)
+        if (nodeA?.position && nodeB?.position) {
+          const centerA = nodeA.position.x + nodeWidth / 2
+          const centerB = nodeB.position.x + nodeWidth / 2
+          const centerX = (centerA + centerB) / 2
+          const bottomA = nodeA.position.y + nodeHeight
+          const bottomB = nodeB.position.y + nodeHeight
+          const bottomY = Math.max(bottomA, bottomB)
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              sourceX: centerX,
+              sourceY: bottomY,
+            },
+          }
+        }
+      }
+      return edge
+    }
 
     const hasStoredHandles = !!edge.sourceHandle || !!edge.targetHandle
     if (hasStoredHandles) {

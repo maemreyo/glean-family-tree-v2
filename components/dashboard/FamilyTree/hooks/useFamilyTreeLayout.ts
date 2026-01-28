@@ -30,6 +30,46 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
   }, [persons])
 
   const initialEdges: Edge[] = useMemo(() => {
+    const spousePairs = new Set<string>()
+    const childParents = new Map<string, Map<string, string>>()
+
+    relationships.forEach((rel) => {
+      if (rel.type === 'spouse') {
+        const pairKey = [rel.from_person_id, rel.to_person_id].sort().join('|')
+        spousePairs.add(pairKey)
+      }
+      if (rel.type === 'parent') {
+        if (!childParents.has(rel.to_person_id)) {
+          childParents.set(rel.to_person_id, new Map())
+        }
+        childParents.get(rel.to_person_id)!.set(rel.from_person_id, rel.id)
+      }
+    })
+
+    const hiddenParentEdgeIds = new Set<string>()
+    const sharedParentEdgeIds = new Set<string>()
+    const spousePairByEdgeId = new Map<string, [string, string]>()
+
+    childParents.forEach((parentMap) => {
+      const parents = Array.from(parentMap.keys())
+      for (let i = 0; i < parents.length; i += 1) {
+        for (let j = i + 1; j < parents.length; j += 1) {
+          const pairKey = [parents[i], parents[j]].sort().join('|')
+          if (spousePairs.has(pairKey)) {
+            const keepParent = parents[i] < parents[j] ? parents[i] : parents[j]
+            const hideParent = keepParent === parents[i] ? parents[j] : parents[i]
+            const edgeIdToHide = parentMap.get(hideParent)
+            if (edgeIdToHide) hiddenParentEdgeIds.add(edgeIdToHide)
+            const edgeIdToKeep = parentMap.get(keepParent)
+            if (edgeIdToKeep) {
+              sharedParentEdgeIds.add(edgeIdToKeep)
+              spousePairByEdgeId.set(edgeIdToKeep, [parents[i], parents[j]].sort() as [string, string])
+            }
+          }
+        }
+      }
+    })
+
     return relationships.map((rel) => {
       const isSpouse = rel.type === 'spouse'
       return {
@@ -40,9 +80,14 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
         targetHandle: rel.target_handle ?? undefined,
         type: isSpouse ? 'straight' : 'smoothstep',
         animated: !isSpouse,
-        style: isSpouse ? { stroke: '#ec4899', strokeWidth: 2 } : undefined,
+        style: isSpouse ? { stroke: 'var(--relationship-spouse)', strokeWidth: 2 } : undefined,
         markerEnd: isSpouse ? undefined : { type: MarkerType.ArrowClosed },
-        data: { relationshipType: rel.type },
+        data: {
+          relationshipType: rel.type,
+          hidden: hiddenParentEdgeIds.has(rel.id),
+          sharedChild: sharedParentEdgeIds.has(rel.id),
+          spousePair: spousePairByEdgeId.get(rel.id),
+        },
       }
     })
   }, [relationships])

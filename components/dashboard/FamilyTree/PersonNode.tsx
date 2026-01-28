@@ -47,7 +47,7 @@ export function PersonNode({ id, data }: NodeProps) {
           id="top"
           type="target" 
           position={Position.Top} 
-          className="!bg-gray-400 !w-3 !h-3" 
+          className="family-handle family-handle-parent opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
           style={{ top: -6 }}
         />
         
@@ -78,7 +78,7 @@ export function PersonNode({ id, data }: NodeProps) {
           id="bottom"
           type="source" 
           position={Position.Bottom} 
-          className="!bg-gray-400 !w-3 !h-3" 
+          className="family-handle family-handle-parent opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
           style={{ bottom: -6 }}
         />
         
@@ -87,14 +87,14 @@ export function PersonNode({ id, data }: NodeProps) {
           type="source" 
           position={Position.Right} 
           id="spouse-right"
-          className="!bg-pink-400 !w-2 !h-2 !rounded-full" 
+          className="family-handle family-handle-spouse opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
           style={{ right: -4, top: '50%' }}
         />
         <Handle 
           type="target" 
           position={Position.Left} 
           id="spouse-left"
-          className="!bg-pink-400 !w-2 !h-2 !rounded-full" 
+          className="family-handle family-handle-spouse opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
           style={{ left: -4, top: '50%' }}
         />
       </div>

@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { EdgeLabelRenderer, EdgeProps, getSmoothStepPath } from 'reactflow'
 import { Heart, X } from 'lucide-react'
 
@@ -14,6 +14,7 @@ export function SpouseEdge({
   style = {},
   markerEnd,
 }: EdgeProps) {
+  const [isHovered, setIsHovered] = useState(false)
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -34,6 +35,8 @@ export function SpouseEdge({
 
   return (
     <>
+      {data?.hidden ? null : (
+        <>
       {/* Background white edge for contrast */}
       <path
         id={`${id}-bg`}
@@ -41,8 +44,10 @@ export function SpouseEdge({
         d={edgePath}
         style={{
           strokeWidth: 5,
-          stroke: '#ffffff',
+          stroke: 'var(--relationship-spouse-bg)',
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       />
       
       {/* Main pink edge */}
@@ -53,11 +58,13 @@ export function SpouseEdge({
         style={{
           ...style,
           strokeWidth: 3,
-          stroke: '#ec4899',
+          stroke: 'var(--relationship-spouse)',
           strokeDasharray: '8, 4',
           animation: 'dash 20s linear infinite',
         }}
         markerEnd={markerEnd}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       />
       
       {/* Heart icon in the middle */}
@@ -81,7 +88,12 @@ export function SpouseEdge({
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX + 18}px,${labelY - 18}px)`,
+            opacity: isHovered ? 1 : 0,
+            transition: 'opacity 150ms ease',
+            pointerEvents: isHovered ? 'auto' : 'none',
           }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           <button
             type="button"
@@ -100,6 +112,8 @@ export function SpouseEdge({
           }
         }
       `}</style>
+        </>
+      )}
     </>
   )
 }
@@ -116,9 +130,12 @@ export function RelationshipEdge({
   style = {},
   markerEnd,
 }: EdgeProps) {
+  const [isHovered, setIsHovered] = useState(false)
+  const resolvedSourceX = typeof data?.sourceX === 'number' ? data.sourceX : sourceX
+  const resolvedSourceY = typeof data?.sourceY === 'number' ? data.sourceY : sourceY
   const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
+    sourceX: resolvedSourceX,
+    sourceY: resolvedSourceY,
     sourcePosition,
     targetX,
     targetY,
@@ -135,34 +152,45 @@ export function RelationshipEdge({
 
   return (
     <>
-      <path
-        id={id}
-        className="react-flow__edge-path"
-        d={edgePath}
-        style={{
-          ...style,
-          strokeWidth: 2,
-          stroke: style?.stroke || '#9ca3af',
-        }}
-        markerEnd={markerEnd}
-      />
-      <EdgeLabelRenderer>
-        <div
-          className="pointer-events-auto"
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="h-5 w-5 rounded-full bg-white text-red-500 border shadow flex items-center justify-center hover:bg-red-50"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      </EdgeLabelRenderer>
+      {data?.hidden ? null : (
+        <>
+          <path
+            id={id}
+            className="react-flow__edge-path"
+            d={edgePath}
+            style={{
+              ...style,
+              strokeWidth: 2,
+              stroke: style?.stroke || 'var(--relationship-parent)',
+            }}
+            markerEnd={markerEnd}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          />
+          <EdgeLabelRenderer>
+            <div
+              className="pointer-events-auto"
+              style={{
+                position: 'absolute',
+                transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+                opacity: isHovered ? 1 : 0,
+                transition: 'opacity 150ms ease',
+                pointerEvents: isHovered ? 'auto' : 'none',
+              }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="h-5 w-5 rounded-full bg-white text-red-500 border shadow flex items-center justify-center hover:bg-red-50"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          </EdgeLabelRenderer>
+        </>
+      )}
     </>
   )
 }

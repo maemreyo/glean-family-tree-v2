@@ -20,25 +20,25 @@ export function PersonNode({ id, data }: NodeProps) {
       {/* Spouse indicator badge */}
       {hasSpouses && (
         <div className="absolute -top-2 -right-2 z-10">
-          <div className="bg-pink-500 text-white rounded-full h-5 w-5 flex items-center justify-center border-2 border-white shadow-md">
-            <Heart className="h-3 w-3 fill-white" />
+          <div className="rounded-full h-5 w-5 flex items-center justify-center border-2 shadow-md bg-[color:var(--spouse-badge-bg)] text-[color:var(--spouse-badge-fg)] border-[color:var(--spouse-badge-border)]">
+            <Heart className="h-3 w-3 fill-[color:var(--spouse-badge-fg)] text-[color:var(--spouse-badge-fg)]" />
           </div>
           {data.spouseCount > 1 && (
-            <div className="absolute -bottom-1 -right-1 bg-pink-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center border border-white shadow-sm">
+            <div className="absolute -bottom-1 -right-1 text-[color:var(--spouse-badge-fg)] text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center border shadow-sm bg-[color:var(--spouse-count-bg)] border-[color:var(--spouse-badge-border)]">
               {data.spouseCount}
             </div>
           )}
         </div>
       )}
       
-      <div className={`flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-white p-2 shadow-sm transition-all hover:shadow-md dark:bg-gray-800 dark:border-gray-700 ${
-        hasSpouses ? 'ring-2 ring-pink-200 dark:ring-pink-900/50' : ''
+      <div className={`flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-card text-card-foreground p-2 shadow-sm transition-all hover:shadow-md ${
+        hasSpouses ? 'ring-2 ring-[color:var(--spouse-ring)]' : ''
       }`}>
         {!data?.readOnly && (
           <button
             type="button"
             onClick={handleDelete}
-            className="absolute -top-2 -left-2 h-5 w-5 rounded-full bg-white text-red-500 border shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute -top-2 -left-2 h-5 w-5 rounded-full bg-background text-destructive border border-border shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="h-3 w-3" />
           </button>
@@ -53,22 +53,22 @@ export function PersonNode({ id, data }: NodeProps) {
         
         <Avatar className="h-8 w-8 border">
           <AvatarImage src={profilePhoto?.url} alt={data.label} className="object-cover" />
-          <AvatarFallback className="bg-gray-100 text-gray-400 dark:bg-gray-700">
+          <AvatarFallback className="bg-muted text-muted-foreground">
             <User className="h-4 w-4" />
           </AvatarFallback>
         </Avatar>
         
         <div className="flex flex-col overflow-hidden">
-          <span className="truncate text-sm font-medium leading-none text-gray-900 dark:text-gray-100">
+          <span className="truncate text-sm font-medium leading-none">
             {data.label}
           </span>
           {data.date_of_birth && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               {new Date(data.date_of_birth).getFullYear()}
             </span>
           )}
           {hasSpouses && data.spouseNames && (
-            <span className="text-[10px] text-pink-600 dark:text-pink-400 truncate mt-0.5">
+            <span className="text-[10px] truncate mt-0.5 text-[color:var(--spouse-text)]">
               ♥ {data.spouseNames}
             </span>
           )}

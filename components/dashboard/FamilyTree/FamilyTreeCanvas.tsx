@@ -50,7 +50,7 @@ export function FamilyTreeCanvas({
   children,
 }: FamilyTreeCanvasProps) {
   return (
-    <div className="h-full w-full rounded-lg border bg-white shadow-sm dark:bg-gray-800 dark:border-gray-700">
+    <div className="h-full w-full rounded-lg border bg-card text-card-foreground shadow-sm">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -73,9 +73,8 @@ export function FamilyTreeCanvas({
         <Controls />
         <MiniMap 
           nodeColor={(node) => {
-            // Color nodes based on spouse status
             const hasSpouses = node.data?.spouseCount > 0
-            return hasSpouses ? '#fce7f3' : '#f3f4f6'
+            return hasSpouses ? 'var(--minimap-node-spouse)' : 'var(--minimap-node)'
           }}
         />
         <Background gap={12} size={1} />

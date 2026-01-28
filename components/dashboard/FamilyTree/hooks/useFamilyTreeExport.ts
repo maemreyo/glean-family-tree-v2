@@ -41,8 +41,12 @@ export function useFamilyTreeExport({
     const viewport = document.querySelector('.react-flow__viewport') as HTMLElement
     if (!viewport) return
 
+    const backgroundColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--background')
+      .trim() || '#fff'
+
     toPng(viewport, {
-      backgroundColor: '#fff',
+      backgroundColor,
       width: nodesBounds.width,
       height: nodesBounds.height,
       style: {

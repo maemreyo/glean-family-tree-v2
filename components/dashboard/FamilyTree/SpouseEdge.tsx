@@ -1,6 +1,7 @@
-import { useState, type MouseEvent } from 'react'
+import type { MouseEvent } from 'react'
 import { EdgeLabelRenderer, EdgeProps, getSmoothStepPath } from 'reactflow'
 import { Heart, X } from 'lucide-react'
+import { useEdgeHover } from './hooks/useEdgeHover'
 
 export function SpouseEdge({
   id,
@@ -14,7 +15,7 @@ export function SpouseEdge({
   style = {},
   markerEnd,
 }: EdgeProps) {
-  const [isHovered, setIsHovered] = useState(false)
+  const { isHovered, handleEnter, handleLeave } = useEdgeHover(240)
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -37,17 +38,29 @@ export function SpouseEdge({
     <>
       {data?.hidden ? null : (
         <>
-      {/* Background white edge for contrast */}
+      <path
+        id={`${id}-hitbox`}
+        className="react-flow__edge-path"
+        d={edgePath}
+        style={{
+          strokeWidth: 'var(--edge-hitbox-width)',
+          stroke: 'transparent',
+        }}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+      />
       <path
         id={`${id}-bg`}
         className="react-flow__edge-path"
         d={edgePath}
         style={{
-          strokeWidth: 5,
+          strokeWidth: 'var(--edge-spouse-bg-width)',
           stroke: 'var(--relationship-spouse-bg)',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
       />
       
       {/* Main pink edge */}
@@ -57,14 +70,16 @@ export function SpouseEdge({
         d={edgePath}
         style={{
           ...style,
-          strokeWidth: 3,
+          strokeWidth: 'var(--edge-spouse-width)',
           stroke: 'var(--relationship-spouse)',
-          strokeDasharray: '8, 4',
+          strokeDasharray: 'var(--edge-spouse-dash)',
           animation: 'dash 20s linear infinite',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
         }}
         markerEnd={markerEnd}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
       />
       
       {/* Heart icon in the middle */}
@@ -77,8 +92,8 @@ export function SpouseEdge({
         style={{ pointerEvents: 'none' }}
       >
         <div className="flex items-center justify-center w-full h-full">
-          <div className="bg-pink-100 rounded-full p-1 border-2 border-pink-500 shadow-sm">
-            <Heart className="h-3 w-3 text-pink-500 fill-pink-500" />
+          <div className="rounded-full p-1 border-2 shadow-sm bg-[color:var(--spouse-heart-bg)] border-[color:var(--spouse-heart-border)]">
+            <Heart className="h-3 w-3 text-[color:var(--spouse-heart-icon)] fill-[color:var(--spouse-heart-icon)]" />
           </div>
         </div>
       </foreignObject>
@@ -92,13 +107,13 @@ export function SpouseEdge({
             transition: 'opacity 150ms ease',
             pointerEvents: isHovered ? 'auto' : 'none',
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
         >
           <button
             type="button"
             onClick={handleDelete}
-            className="h-5 w-5 rounded-full bg-white text-red-500 border shadow flex items-center justify-center hover:bg-red-50"
+            className="h-5 w-5 rounded-full bg-background text-destructive border border-border shadow flex items-center justify-center hover:bg-destructive/10"
           >
             <X className="h-3 w-3" />
           </button>
@@ -130,7 +145,7 @@ export function RelationshipEdge({
   style = {},
   markerEnd,
 }: EdgeProps) {
-  const [isHovered, setIsHovered] = useState(false)
+  const { isHovered, handleEnter, handleLeave } = useEdgeHover(240)
   const resolvedSourceX = typeof data?.sourceX === 'number' ? data.sourceX : sourceX
   const resolvedSourceY = typeof data?.sourceY === 'number' ? data.sourceY : sourceY
   const [edgePath, labelX, labelY] = getSmoothStepPath({
@@ -155,17 +170,30 @@ export function RelationshipEdge({
       {data?.hidden ? null : (
         <>
           <path
+            id={`${id}-hitbox`}
+            className="react-flow__edge-path"
+            d={edgePath}
+            style={{
+              strokeWidth: 'var(--edge-hitbox-width)',
+              stroke: 'transparent',
+            }}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          />
+          <path
             id={id}
             className="react-flow__edge-path"
             d={edgePath}
             style={{
               ...style,
-              strokeWidth: 2,
+              strokeWidth: 'var(--edge-parent-width)',
               stroke: style?.stroke || 'var(--relationship-parent)',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
             }}
             markerEnd={markerEnd}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
           />
           <EdgeLabelRenderer>
             <div
@@ -177,13 +205,13 @@ export function RelationshipEdge({
                 transition: 'opacity 150ms ease',
                 pointerEvents: isHovered ? 'auto' : 'none',
               }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              onMouseEnter={handleEnter}
+              onMouseLeave={handleLeave}
             >
               <button
                 type="button"
                 onClick={handleDelete}
-                className="h-5 w-5 rounded-full bg-white text-red-500 border shadow flex items-center justify-center hover:bg-red-50"
+                className="h-5 w-5 rounded-full bg-background text-destructive border border-border shadow flex items-center justify-center hover:bg-destructive/10"
               >
                 <X className="h-3 w-3" />
               </button>

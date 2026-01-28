@@ -187,6 +187,35 @@ export function syncSpouseData(nodes: Node[], edges: Edge[]) {
   return { nodes: nodesWithSpouseData, edges: updatedEdges }
 }
 
+export function updateSharedChildEdges(nodes: Node[], edges: Edge[]) {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]))
+  return edges.map((edge) => {
+    const sharedChild = edge.data?.sharedChild && Array.isArray(edge.data?.spousePair)
+    if (!sharedChild) return edge
+
+    const [parentA, parentB] = edge.data.spousePair as [string, string]
+    const nodeA = nodeById.get(parentA)
+    const nodeB = nodeById.get(parentB)
+    if (!nodeA?.position || !nodeB?.position) return edge
+
+    const centerA = nodeA.position.x + nodeWidth / 2
+    const centerB = nodeB.position.x + nodeWidth / 2
+    const centerX = (centerA + centerB) / 2
+    const bottomA = nodeA.position.y + nodeHeight
+    const bottomB = nodeB.position.y + nodeHeight
+    const bottomY = Math.max(bottomA, bottomB)
+
+    return {
+      ...edge,
+      data: {
+        ...edge.data,
+        sourceX: centerX,
+        sourceY: bottomY,
+      },
+    }
+  })
+}
+
 export function getLayoutedElements(nodes: Node[], edges: Edge[], direction = 'TB') {
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))

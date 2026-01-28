@@ -24,7 +24,7 @@ import { useFamilyTreeImport } from './hooks/useFamilyTreeImport'
 import { usePositionManagement } from './hooks/usePositionManagement'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
-import { getLayoutedElements } from './utils/dagre-layout'
+import { getLayoutedElements, updateSharedChildEdges } from './utils/dagre-layout'
 import { toast } from 'sonner'
 import 'reactflow/dist/style.css'
 
@@ -87,20 +87,32 @@ export function FamilyTree({
   } = usePositionManagement({ readOnly, userId })
 
   // Handlers
+  const refreshSharedChildEdges = useCallback(
+    (movedNode: Node) => {
+      const updatedNodes = nodes.map((node) =>
+        node.id === movedNode.id ? { ...node, position: movedNode.position } : node
+      )
+      setEdges((currentEdges) => updateSharedChildEdges(updatedNodes, currentEdges))
+    },
+    [nodes, setEdges]
+  )
+
   const onNodeDrag = useCallback(
     (_: any, node: Node) => {
       if (readOnly) return
       saveNodePosition(node.id, node.position.x, node.position.y)
+      refreshSharedChildEdges(node)
     },
-    [saveNodePosition, readOnly]
+    [saveNodePosition, readOnly, refreshSharedChildEdges]
   )
 
   const onNodeDragStop = useCallback(
     (_: any, node: Node) => {
       if (readOnly) return
       saveNodePosition(node.id, node.position.x, node.position.y)
+      refreshSharedChildEdges(node)
     },
-    [saveNodePosition, readOnly]
+    [saveNodePosition, readOnly, refreshSharedChildEdges]
   )
 
   const handleAutoLayout = useCallback(async () => {

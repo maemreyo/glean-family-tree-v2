@@ -67,4 +67,62 @@ describe("PersonMetadataForm", () => {
       expect.any(Object)
     )
   })
+
+  it("submits confidence and source fields", async () => {
+    const mutate = jest.fn()
+    useUpdatePersonMock.mockReturnValue({ mutate, isPending: false })
+
+    render(
+      <PersonMetadataForm
+        person={{
+          id: "person-2",
+          name: "Test Person",
+          gender: null,
+          date_of_birth: null,
+          is_deceased: false,
+          date_of_death: null,
+          nickname: null,
+          birth_place: null,
+          death_place: null,
+          occupation: null,
+          biography: null,
+          notes: null,
+          position_x: null,
+          position_y: null,
+          family_id: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          user_id: "user-1",
+          is_visible_in_share: true,
+          confidence_level: "confirmed",
+          source_url: null,
+          source_notes: null,
+        } as any}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/confidence level/i), {
+      target: { value: "speculative" },
+    })
+    fireEvent.change(screen.getByLabelText(/source url/i), {
+      target: { value: "https://example.com" },
+    })
+    fireEvent.change(screen.getByLabelText(/source notes/i), {
+      target: { value: "Family interview, 1998" },
+    })
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /save changes/i }))
+    })
+
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "person-2",
+        confidence_level: "speculative",
+        source_url: "https://example.com",
+        source_notes: "Family interview, 1998",
+      }),
+      expect.any(Object)
+    )
+  })
 })

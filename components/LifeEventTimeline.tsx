@@ -32,6 +32,9 @@ const eventSchema = z.object({
   location: z.string().optional(),
   description: z.string().optional(),
   event_type: z.string().min(1, 'Type is required').default('generic'),
+  confidence_level: z.string().optional(),
+  source_url: z.string().optional(),
+  source_notes: z.string().optional(),
 })
 
 interface LifeEventTimelineProps {
@@ -54,6 +57,9 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
       location: '',
       description: '',
       event_type: 'generic',
+      confidence_level: 'confirmed',
+      source_url: '',
+      source_notes: '',
     },
   })
 
@@ -67,6 +73,9 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
         location: values.location || null,
         description: values.description || null,
         event_type: values.event_type,
+        confidence_level: values.confidence_level || null,
+        source_url: values.source_url?.trim() ? values.source_url : null,
+        source_notes: values.source_notes?.trim() ? values.source_notes : null,
       },
       {
         onSuccess: () => {
@@ -179,6 +188,61 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
                 )}
               />
 
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="confidence_level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confidence Level</FormLabel>
+                      <FormControl>
+                        <select
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="confirmed">Confirmed</option>
+                          <option value="speculative">Speculative</option>
+                          <option value="uncertain">Uncertain</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="source_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Source URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="source_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Source Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Details about the source..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button 
                   type="button" 
@@ -240,6 +304,26 @@ export function LifeEventTimeline({ personId, userId, className }: LifeEventTime
                   <p className="text-sm text-muted-foreground mt-1">
                     {event.description}
                   </p>
+                )}
+
+                {(event.confidence_level || event.source_url || event.source_notes) && (
+                  <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                    {event.confidence_level && (
+                      <div>
+                        Confidence: <span className="capitalize">{event.confidence_level}</span>
+                      </div>
+                    )}
+                    {event.source_url && (
+                      <div>
+                        Source: <span className="break-all">{event.source_url}</span>
+                      </div>
+                    )}
+                    {event.source_notes && (
+                      <div>
+                        Notes: <span>{event.source_notes}</span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

@@ -122,7 +122,7 @@ This document outlines the strategic development plan for **Glean Family Tree V2
   - [x] Invite collaborators (roles: viewer/editor, email invite).
   - [x] Privacy controls for living people (hide details by default).
   - [x] Per-profile visibility toggles (override defaults).
-  - [ ] Confidence/source tagging for facts (confirmed vs speculative).
+  - [x] Confidence/source tagging for facts (confirmed vs speculative).
   - [ ] Stories & traditions on profiles (long-form narrative, timeline integration).
   - [ ] Photo albums grouped by events (weddings, birthdays, reunions).
   - [ ] Timeline view enhancements (printable charts, export-friendly layouts).

@@ -171,6 +171,7 @@ export type Database = {
       }
       life_events: {
         Row: {
+          confidence_level: string | null
           created_at: string
           date: string | null
           description: string | null
@@ -178,10 +179,13 @@ export type Database = {
           id: string
           location: string | null
           person_id: string
+          source_notes: string | null
+          source_url: string | null
           title: string
           user_id: string
         }
         Insert: {
+          confidence_level?: string | null
           created_at?: string
           date?: string | null
           description?: string | null
@@ -189,10 +193,13 @@ export type Database = {
           id?: string
           location?: string | null
           person_id: string
+          source_notes?: string | null
+          source_url?: string | null
           title: string
           user_id: string
         }
         Update: {
+          confidence_level?: string | null
           created_at?: string
           date?: string | null
           description?: string | null
@@ -200,6 +207,8 @@ export type Database = {
           id?: string
           location?: string | null
           person_id?: string
+          source_notes?: string | null
+          source_url?: string | null
           title?: string
           user_id?: string
         }

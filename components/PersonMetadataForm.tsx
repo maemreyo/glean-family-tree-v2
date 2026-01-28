@@ -27,8 +27,8 @@ const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   gender: z.string().optional(),
   date_of_birth: z.string().optional().or(z.literal('')),
-  is_deceased: z.boolean().default(false),
-  is_visible_in_share: z.boolean().default(true),
+  is_deceased: z.boolean(),
+  is_visible_in_share: z.boolean(),
   date_of_death: z.string().optional().or(z.literal('')),
   nickname: z.string().optional(),
   birth_place: z.string().optional(),
@@ -87,6 +87,9 @@ export function PersonMetadataForm({ person, onSuccess, onCancel }: PersonMetada
         occupation: values.occupation || null,
         biography: values.biography || null,
         notes: values.notes || null,
+        confidence_level: values.confidence_level || null,
+        source_url: values.source_url?.trim() ? values.source_url : null,
+        source_notes: values.source_notes?.trim() ? values.source_notes : null,
       },
       {
         onSuccess: () => {
@@ -275,6 +278,57 @@ export function PersonMetadataForm({ person, onSuccess, onCancel }: PersonMetada
               <FormLabel>Biography</FormLabel>
               <FormControl>
                 <Textarea placeholder="Life story..." className="resize-none" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="confidence_level"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confidence Level</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    {...field}
+                  >
+                    <option value="confirmed">Confirmed</option>
+                    <option value="speculative">Speculative</option>
+                    <option value="uncertain">Uncertain</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="source_url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Source URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="source_notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Source Notes</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Details about the source..." className="resize-none" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -6,3 +6,8 @@ ADD COLUMN is_visible_in_share boolean DEFAULT true,
 ADD COLUMN confidence_level text DEFAULT 'confirmed',
 ADD COLUMN source_url text,
 ADD COLUMN source_notes text;
+
+ALTER TABLE life_events
+ADD COLUMN confidence_level text DEFAULT 'confirmed',
+ADD COLUMN source_url text,
+ADD COLUMN source_notes text;

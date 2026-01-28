@@ -14,7 +14,7 @@ import { ListSkeleton } from '@/components/skeletons/ListSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { Trash2 } from 'lucide-react'
 
-const FamilyTree = dynamic(() => import('@/components/FamilyTree').then(mod => mod.FamilyTree), {
+const FamilyTree = dynamic(() => import('@/components/dashboard/FamilyTree').then(mod => mod.FamilyTree), {
   ssr: false,
   loading: () => <TreeSkeleton />,
 })

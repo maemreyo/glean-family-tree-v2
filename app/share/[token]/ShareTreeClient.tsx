@@ -1,6 +1,6 @@
 'use client'
 
-import { FamilyTree } from '@/components/FamilyTree'
+import { FamilyTree } from '@/components/dashboard/FamilyTree'
 import { PersonWithPhoto } from '@/types/app'
 import { Database } from '@/types/database.types'
 

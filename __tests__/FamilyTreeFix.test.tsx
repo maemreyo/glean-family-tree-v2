@@ -2,7 +2,7 @@
 import React from 'react'
 import { render, waitFor } from '@testing-library/react'
 import { ReactFlowProvider } from 'reactflow'
-import { FamilyTree } from '@/components/FamilyTree'
+import { FamilyTree } from '@/components/dashboard/FamilyTree'
 
 // --- Mock Factories ---
 

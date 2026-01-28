@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { act } from "react"
-import { ShareDialog } from '@/components/FamilyTree/ShareDialog'
+import { ShareDialog } from '@/components/dashboard/FamilyTree/ShareDialog'
 
 const useSharedLinksMock = jest.fn()
 const useCreateSharedLinkMock = jest.fn()

@@ -1,8 +1,8 @@
 
 import React from 'react'
 import { render, waitFor } from '@testing-library/react'
-import { FamilyTree } from '../components/FamilyTree'
 import { ReactFlowProvider } from 'reactflow'
+import { FamilyTree } from '@/components/FamilyTree'
 
 // --- Mock Factories ---
 
@@ -70,11 +70,11 @@ jest.mock('reactflow', () => {
 })
 
 // 4. Mock other dependencies
-jest.mock('../components/PersonNode', () => ({
+jest.mock('@/components/FamilyTree/PersonNode', () => ({
   PersonNode: () => <div data-testid="person-node" />
 }))
 
-jest.mock('../components/ShareDialog', () => ({
+jest.mock('@/components/FamilyTree/ShareDialog', () => ({
   ShareDialog: () => <div data-testid="share-dialog" />
 }))
 

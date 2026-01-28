@@ -49,7 +49,7 @@ export function generateGedcom(persons: Person[], relationships: Relationship[])
     // Birth
     if (p.date_of_birth || p.birth_place) {
       lines.push('1 BIRT')
-      if (p.date_of_birth) lines.push(`2 DATE ${formatDate(p.date_of_birth)}`)
+      if (p.date_of_birth) lines.push(`2 DATE ${formatGedcomDate(p.date_of_birth)}`)
       if (p.birth_place) lines.push(`2 PLAC ${p.birth_place}`)
     }
 
@@ -251,7 +251,7 @@ export function parseGedcomDate(dateStr?: string): string | null {
   }
 }
 
-function formatDate(dateStr: string): string {
+export function formatGedcomDate(dateStr: string): string {
   try {
       const date = new Date(dateStr)
       if (isNaN(date.getTime())) return dateStr

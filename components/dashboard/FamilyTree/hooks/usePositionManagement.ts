@@ -5,9 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 
 interface UsePositionManagementProps {
   readOnly?: boolean
+  userId: string
 }
 
-export function usePositionManagement({ readOnly = false }: UsePositionManagementProps) {
+export function usePositionManagement({ readOnly = false, userId }: UsePositionManagementProps) {
   const { mutate: updatePerson } = useUpdatePerson()
   const supabase = createClient()
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -39,6 +40,7 @@ export function usePositionManagement({ readOnly = false }: UsePositionManagemen
 
       const updates = nodes.map(node => ({
         id: node.id,
+        user_id: userId,
         position_x: node.position.x,
         position_y: node.position.y,
         updated_at: new Date().toISOString(),

@@ -70,7 +70,7 @@ export function FamilyTree({
   const {
     saveNodePosition,
     batchSavePositions,
-  } = usePositionManagement({ readOnly })
+  } = usePositionManagement({ readOnly, userId })
 
   // Handlers
   const onNodeDrag = useCallback(

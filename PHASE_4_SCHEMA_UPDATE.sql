@@ -11,3 +11,7 @@ ALTER TABLE life_events
 ADD COLUMN confidence_level text DEFAULT 'confirmed',
 ADD COLUMN source_url text,
 ADD COLUMN source_notes text;
+
+ALTER TABLE relationships
+ADD COLUMN IF NOT EXISTS source_handle text,
+ADD COLUMN IF NOT EXISTS target_handle text;

@@ -152,9 +152,24 @@ export function FamilyTree({
     (params: Connection) => {
       if (readOnly) return
 
+      const isSpouseConnection =
+        params.sourceHandle?.startsWith('spouse') ||
+        params.targetHandle?.startsWith('spouse')
+      const relationshipType = isSpouseConnection ? 'spouse' : 'parent'
+
       // Optimistic update
       setEdges((eds) =>
-        addEdge({ ...params, type: 'smoothstep', animated: true }, eds)
+        addEdge(
+          {
+            ...params,
+            type: isSpouseConnection ? 'spouse' : 'relationship',
+            animated: !isSpouseConnection,
+            data: {
+              relationshipType,
+            },
+          },
+          eds
+        )
       )
 
       // Persist to Supabase
@@ -163,7 +178,9 @@ export function FamilyTree({
           user_id: userId,
           from_person_id: params.source,
           to_person_id: params.target,
-          type: 'parent', // Default to parent
+          source_handle: params.sourceHandle ?? null,
+          target_handle: params.targetHandle ?? null,
+          type: relationshipType,
         })
       }
     },

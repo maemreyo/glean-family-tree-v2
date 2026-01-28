@@ -152,6 +152,8 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
         user_id: userId,
         from_person_id: relationship.from_person_id ?? relationship.parent_id,
         to_person_id: relationship.to_person_id ?? relationship.child_id,
+        source_handle: relationship.source_handle ?? null,
+        target_handle: relationship.target_handle ?? null,
         type: relationship.type || relationship.relationship_type,
         created_at: relationship.created_at ?? now,
       }))

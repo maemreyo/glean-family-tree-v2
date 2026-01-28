@@ -44,6 +44,7 @@ export function PersonNode({ id, data }: NodeProps) {
           </button>
         )}
         <Handle 
+          id="top"
           type="target" 
           position={Position.Top} 
           className="!bg-gray-400 !w-3 !h-3" 
@@ -74,6 +75,7 @@ export function PersonNode({ id, data }: NodeProps) {
         </div>
 
         <Handle 
+          id="bottom"
           type="source" 
           position={Position.Bottom} 
           className="!bg-gray-400 !w-3 !h-3" 

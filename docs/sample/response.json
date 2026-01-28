@@ -1,0 +1,33 @@
+```
+curl 'https://lfaubupwqmujwpwckpfj.supabase.co/rest/v1/relationships?select=*&user_id=eq.d02058fa-635a-4bb0-9642-22fc2513d989' \
+  --compressed \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0' \
+  -H 'Accept: */*' \
+  -H 'Accept-Language: en-GB,en;q=0.9' \
+  -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+  -H 'accept-profile: public' \
+  -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmYXVidXB3cW11andwd2NrcGZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTg0ODIsImV4cCI6MjA4NTA3NDQ4Mn0.FBygxe5vjYL4c6p_nQAtRgiY9TXOmVgbOcat7EDOFK8' \
+  -H 'authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6Ijk3ODE3OTY3LTg5ZGQtNDJiYi1iZGJiLTkxY2I5ZjFlMjIyYSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2xmYXVidXB3cW11andwd2NrcGZqLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJkMDIwNThmYS02MzVhLTRiYjAtOTY0Mi0yMmZjMjUxM2Q5ODkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY5NjE4Mzg5LCJpYXQiOjE3Njk2MTQ3ODksImVtYWlsIjoibmdvbmh1dGhhbmh0cnVuZzE0MDlAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6Im5nb25odXRoYW5odHJ1bmcxNDA5QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6ImQwMjA1OGZhLTYzNWEtNGJiMC05NjQyLTIyZmMyNTEzZDk4OSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzY5NTgzOTg3fV0sInNlc3Npb25faWQiOiJkZDVmYjk0MS1iYzJkLTQ1ZTQtODFhZS00MWFiMDMzMTNlOWIiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.SqzWOyOYCBYjXzh99TKFuaq6i0PWV32f0lhIMcfTD4gYyeqnAkNl4Yy5LCEYswU8Y1ewEk5NHr88_E1tD0YAjw' \
+  -H 'x-client-info: supabase-ssr/0.8.0 createBrowserClient' \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Connection: keep-alive' \
+  -H 'Referer: http://localhost:3000/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: cross-site' \
+  -H 'Priority: u=4' \
+  -H 'Pragma: no-cache' \
+  -H 'Cache-Control: no-cache' \
+  -H 'TE: trailers'
+```
+[
+    {
+        "id": "16d402d2-c956-4b68-a0db-b990b1ccb5dc",
+        "created_at": "2026-01-28T16:08:03.659839+00:00",
+        "updated_at": "2026-01-28T16:08:03.659839+00:00",
+        "from_person_id": "e93c650c-e76f-4eec-8268-ba91ede83e3e",
+        "to_person_id": "e46f0152-e55e-4816-929d-e708cb780661",
+        "type": "parent",
+        "user_id": "d02058fa-635a-4bb0-9642-22fc2513d989"
+    }
+]

@@ -34,6 +34,8 @@ create table if not exists relationships (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   from_person_id uuid references persons(id) on delete cascade not null,
   to_person_id uuid references persons(id) on delete cascade not null,
+  source_handle text,
+  target_handle text,
   type text not null check (type in ('parent', 'spouse', 'child')),
   user_id uuid references auth.users(id) on delete cascade not null,
   constraint relationships_unique unique (from_person_id, to_person_id, type)

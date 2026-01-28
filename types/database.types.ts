@@ -95,6 +95,8 @@ export type Database = {
           id: string
           to_person_id: string
           from_person_id: string
+          source_handle: string | null
+          target_handle: string | null
           type: string
           user_id: string
         }
@@ -103,6 +105,8 @@ export type Database = {
           id?: string
           to_person_id: string
           from_person_id: string
+          source_handle?: string | null
+          target_handle?: string | null
           type?: string
           user_id: string
         }
@@ -111,6 +115,8 @@ export type Database = {
           created_at?: string
           id?: string
           from_person_id?: string
+          source_handle?: string | null
+          target_handle?: string | null
           type?: string
           user_id?: string
         }

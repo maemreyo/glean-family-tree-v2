@@ -36,6 +36,8 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
         id: rel.id,
         source: rel.from_person_id,
         target: rel.to_person_id,
+        sourceHandle: rel.source_handle ?? undefined,
+        targetHandle: rel.target_handle ?? undefined,
         type: isSpouse ? 'straight' : 'smoothstep',
         animated: !isSpouse,
         style: isSpouse ? { stroke: '#ec4899', strokeWidth: 2 } : undefined,

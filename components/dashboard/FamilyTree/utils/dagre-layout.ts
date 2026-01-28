@@ -125,35 +125,39 @@ export function syncSpouseData(nodes: Node[], edges: Edge[]) {
   // Ensure direction is always Left -> Right to match handles
   const updatedEdges = edges.map((edge) => {
     const isSpouse = edge.data?.relationshipType === 'spouse'
-    if (isSpouse) {
-      const sourceNode = nodesWithSpouseData.find(n => n.id === edge.source)
-      const targetNode = nodesWithSpouseData.find(n => n.id === edge.target)
+    if (!isSpouse) return edge
 
-      let finalSource = edge.source
-      let finalTarget = edge.target
-
-      // If both nodes have positions, ensure we connect Left -> Right
-      // Source (Left) -> Target (Right)
-      // Source Handle: 'spouse-right'
-      // Target Handle: 'spouse-left'
-      if (sourceNode?.position && targetNode?.position) {
-        if (sourceNode.position.x > targetNode.position.x) {
-          // Source is to the right of target, swap them
-          finalSource = edge.target
-          finalTarget = edge.source
-        }
-      }
-
+    const hasStoredHandles = !!edge.sourceHandle || !!edge.targetHandle
+    if (hasStoredHandles) {
       return {
         ...edge,
-        source: finalSource,
-        target: finalTarget,
-        sourceHandle: 'spouse-right',
-        targetHandle: 'spouse-left',
-        type: 'spouse', // Use custom spouse edge
+        sourceHandle: edge.sourceHandle ?? 'spouse-right',
+        targetHandle: edge.targetHandle ?? 'spouse-left',
+        type: 'spouse',
       }
     }
-    return edge
+
+    const sourceNode = nodesWithSpouseData.find(n => n.id === edge.source)
+    const targetNode = nodesWithSpouseData.find(n => n.id === edge.target)
+
+    let finalSource = edge.source
+    let finalTarget = edge.target
+
+    if (sourceNode?.position && targetNode?.position) {
+      if (sourceNode.position.x > targetNode.position.x) {
+        finalSource = edge.target
+        finalTarget = edge.source
+      }
+    }
+
+    return {
+      ...edge,
+      source: finalSource,
+      target: finalTarget,
+      sourceHandle: 'spouse-right',
+      targetHandle: 'spouse-left',
+      type: 'spouse',
+    }
   })
 
   return { nodes: nodesWithSpouseData, edges: updatedEdges }

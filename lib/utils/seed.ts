@@ -54,13 +54,13 @@ export async function seedMockData(userId: string) {
     const relationships: RelationshipInsert[] = []
 
     // Grandparents -> Dad (Assuming John & Mary are Robert's parents)
-  relationships.push({ from_person_id: grandparents[0].id, to_person_id: parents[0].id, user_id: userId, relationship_type: 'parent' })
-  relationships.push({ from_person_id: grandparents[1].id, to_person_id: parents[0].id, user_id: userId, relationship_type: 'parent' })
+  relationships.push({ from_person_id: grandparents[0].id, to_person_id: parents[0].id, user_id: userId, type: 'parent' })
+  relationships.push({ from_person_id: grandparents[1].id, to_person_id: parents[0].id, user_id: userId, type: 'parent' })
 
   // Parents -> Children
   parents.forEach(parent => {
     children.forEach(child => {
-      relationships.push({ from_person_id: parent.id, to_person_id: child.id, user_id: userId, relationship_type: 'parent' })
+      relationships.push({ from_person_id: parent.id, to_person_id: child.id, user_id: userId, type: 'parent' })
     })
   })
 

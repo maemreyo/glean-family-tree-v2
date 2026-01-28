@@ -53,7 +53,7 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
             user_id: userId,
             from_person_id: husbId,
             to_person_id: wifeId,
-            relationship_type: 'spouse',
+            type: 'spouse',
             created_at: new Date().toISOString()
           })
         }
@@ -68,7 +68,7 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
                 user_id: userId,
                 from_person_id: parentId,
                 to_person_id: childId,
-                relationship_type: 'parent',
+                type: 'parent',
                 created_at: new Date().toISOString()
               })
             }
@@ -152,7 +152,7 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
         user_id: userId,
         from_person_id: relationship.from_person_id ?? relationship.parent_id,
         to_person_id: relationship.to_person_id ?? relationship.child_id,
-        relationship_type: relationship.relationship_type,
+        type: relationship.type || relationship.relationship_type,
         created_at: relationship.created_at ?? now,
       }))
 

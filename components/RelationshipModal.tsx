@@ -94,7 +94,7 @@ export function RelationshipModal({
           from_person_id: values.fromPersonId,
           to_person_id: values.toPersonId,
           user_id: userId,
-          relationship_type: 'spouse',
+          type: 'spouse',
         })
         showToast('Spouse relationship created successfully!', 'success')
         form.reset()
@@ -118,7 +118,7 @@ export function RelationshipModal({
         from_person_id: values.fromPersonId,
         to_person_id: values.toPersonId,
         user_id: userId,
-        relationship_type: 'parent',
+        type: 'parent',
       })
       showToast('Relationship created successfully!', 'success')
       form.reset()

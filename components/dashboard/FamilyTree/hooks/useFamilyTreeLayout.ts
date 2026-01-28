@@ -31,7 +31,7 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
 
   const initialEdges: Edge[] = useMemo(() => {
     return relationships.map((rel) => {
-      const isSpouse = rel.relationship_type === 'spouse'
+      const isSpouse = rel.type === 'spouse'
       return {
         id: rel.id,
         source: rel.from_person_id,
@@ -40,7 +40,7 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
         animated: !isSpouse,
         style: isSpouse ? { stroke: '#ec4899', strokeWidth: 2 } : undefined,
         markerEnd: isSpouse ? undefined : { type: MarkerType.ArrowClosed },
-        data: { relationshipType: rel.relationship_type },
+        data: { relationshipType: rel.type },
       }
     })
   }, [relationships])

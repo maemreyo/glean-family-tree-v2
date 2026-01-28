@@ -19,7 +19,7 @@ const createRelationship = (id: string, person1Id: string, person2Id: string) =>
   id,
   from_person_id: person1Id,
   to_person_id: person2Id,
-  relationship_type: 'parent',
+  type: 'parent',
 })
 
 // --- Mocks Setup ---

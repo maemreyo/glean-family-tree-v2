@@ -117,7 +117,7 @@ export function FamilyTree({
           user_id: userId,
           from_person_id: params.source,
           to_person_id: params.target,
-          relationship_type: 'parent', // Default to parent
+          type: 'parent', // Default to parent
         })
       }
     },

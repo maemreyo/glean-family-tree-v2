@@ -80,11 +80,11 @@ export default async function PrintProfilePage({
   const familyMembers: RelationshipWithPerson[] = []
 
   relationships?.forEach((r) => {
-    if (r.relationship_type === 'spouse') {
+    if (r.type === 'spouse') {
         const spouseId = r.from_person_id === personId ? r.to_person_id : r.from_person_id
         const spouse = relatedPersons.find(p => p.id === spouseId)
         if (spouse) familyMembers.push({ related_person: spouse, type: 'spouse' })
-    } else if (r.relationship_type === 'parent') {
+    } else if (r.type === 'parent') {
         if (r.to_person_id === personId) {
             // This relationship means r.from_person_id is the PARENT of current person
             const parent = relatedPersons.find(p => p.id === r.from_person_id)

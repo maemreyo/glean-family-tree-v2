@@ -95,7 +95,7 @@ export type Database = {
           id: string
           to_person_id: string
           from_person_id: string
-          relationship_type: string
+          type: string
           user_id: string
         }
         Insert: {
@@ -103,7 +103,7 @@ export type Database = {
           id?: string
           to_person_id: string
           from_person_id: string
-          relationship_type?: string
+          type?: string
           user_id: string
         }
         Update: {
@@ -111,7 +111,7 @@ export type Database = {
           created_at?: string
           id?: string
           from_person_id?: string
-          relationship_type?: string
+          type?: string
           user_id?: string
         }
         Relationships: [

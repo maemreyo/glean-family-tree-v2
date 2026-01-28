@@ -39,7 +39,7 @@ export class RelationshipValidator {
       (r) =>
         r.from_person_id === parentId &&
         r.to_person_id === childId &&
-        r.relationship_type === 'parent'
+        r.type === 'parent'
     )
 
     if (existingRelationship) {
@@ -100,7 +100,7 @@ export class RelationshipValidator {
     // Check if relationship already exists (in either direction)
     const existingRelationship = this.relationships.find(
       (r) =>
-        r.relationship_type === 'spouse' &&
+        r.type === 'spouse' &&
         ((r.from_person_id === person1Id && r.to_person_id === person2Id) ||
           (r.from_person_id === person2Id && r.to_person_id === person1Id))
     )
@@ -131,7 +131,7 @@ export class RelationshipValidator {
 
       const parents = this.relationships
         .filter(
-          (r) => r.to_person_id === current && r.relationship_type === 'parent'
+          (r) => r.to_person_id === current && r.type === 'parent'
         )
         .map((r) => r.from_person_id)
 
@@ -160,7 +160,7 @@ export class RelationshipValidator {
 
       const children = this.relationships
         .filter(
-          (r) => r.from_person_id === current && r.relationship_type === 'parent'
+          (r) => r.from_person_id === current && r.type === 'parent'
         )
         .map((r) => r.to_person_id)
 

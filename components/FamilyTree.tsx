@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -21,7 +21,7 @@ import ReactFlow, {
 } from 'reactflow'
 import dagre from 'dagre'
 import { toPng } from 'html-to-image'
-import { usePersons, useRelationships, useUpdatePerson } from '@/lib/supabase/queries'
+import { useRelationships, useUpdatePerson } from '@/lib/supabase/queries'
 import { useUIStore } from '@/providers/ui-store-provider'
 import type { Database } from '@/types/database.types'
 import { PersonWithPhoto } from '@/types/app'
@@ -151,6 +151,13 @@ export function FamilyTree({ userId, persons, relationships: initialRelationship
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges)
+
+  // ============================================
+  // 🔥 FIX: Smart sync to prevent position reset
+  // ============================================
+  const prevPersonIdsRef = useRef<Set<string>>(new Set())
+  const prevRelationshipIdsRef = useRef<Set<string>>(new Set())
+  const isInitializedRef = useRef(false)
 
   const onNodeDragStop: NodeDragHandler = useCallback(
     (_, node) => {
@@ -489,15 +496,80 @@ export function FamilyTree({ userId, persons, relationships: initialRelationship
     [setEdges]
   )
   
-  // Update nodes when layoutedNodes changes (e.g. data fetch)
   React.useEffect(() => {
-    console.log('Layout effect triggered', { 
-      nodesCount: layoutedNodes.length, 
-      edgesCount: layoutedEdges.length 
-    })
-    setNodes(layoutedNodes)
-    setEdges(layoutedEdges)
-  }, [layoutedNodes, layoutedEdges, setNodes, setEdges])
+    const currentPersonIds = new Set(persons.map(p => p.id))
+    const currentRelationshipIds = new Set(relationships.map(r => r.id))
+    
+    const prevPersonIds = prevPersonIdsRef.current
+    const prevRelationshipIds = prevRelationshipIdsRef.current
+    
+    // First initialization
+    if (!isInitializedRef.current) {
+      console.log('🎬 Initial layout setup')
+      setNodes(layoutedNodes)
+      setEdges(layoutedEdges)
+      prevPersonIdsRef.current = currentPersonIds
+      prevRelationshipIdsRef.current = currentRelationshipIds
+      isInitializedRef.current = true
+      return
+    }
+    
+    // Check if there are actual structural changes (add/remove)
+    // Using Array.from to avoid TypeScript iteration error with Set
+    const personsChanged = 
+      currentPersonIds.size !== prevPersonIds.size ||
+      !Array.from(currentPersonIds).every(id => prevPersonIds.has(id))
+    
+    const relationshipsChanged =
+      currentRelationshipIds.size !== prevRelationshipIds.size ||
+      !Array.from(currentRelationshipIds).every(id => prevRelationshipIds.has(id))
+    
+    // Only re-layout if there are structural changes
+    if (personsChanged || relationshipsChanged) {
+      const addedPersons = Array.from(currentPersonIds).filter(id => !prevPersonIds.has(id))
+      const removedPersons = Array.from(prevPersonIds).filter(id => !currentPersonIds.has(id))
+      
+      console.log('🔄 Structural changes detected, updating layout', {
+        personsChanged,
+        relationshipsChanged,
+        added: addedPersons,
+        removed: removedPersons
+      })
+      
+      // Preserve existing positions for unchanged nodes
+      const currentPositions = new Map(nodes.map(node => [node.id, node.position]))
+      
+      const updatedNodes = layoutedNodes.map(node => ({
+        ...node,
+        // Keep existing position if node wasn't added/removed
+        position: currentPositions.has(node.id) && !addedPersons.includes(node.id)
+          ? currentPositions.get(node.id)!
+          : node.position
+      }))
+      
+      setNodes(updatedNodes)
+      setEdges(layoutedEdges)
+      
+      // Update refs
+      prevPersonIdsRef.current = currentPersonIds
+      prevRelationshipIdsRef.current = currentRelationshipIds
+    } else {
+      // Only update node data (không thay đổi position)
+      console.log('📝 Updating node data only (preserving positions)')
+      setNodes(currentNodes => 
+        currentNodes.map(node => {
+          const updatedPerson = persons.find(p => p.id === node.id)
+          if (updatedPerson) {
+            return {
+              ...node,
+              data: { ...node.data, ...updatedPerson }
+            }
+          }
+          return node
+        })
+      )
+    }
+  }, [layoutedNodes, layoutedEdges, persons, relationships, setNodes, setEdges]) // nodes removed to prevent infinite loop
 
   const onNodeClick = (_: React.MouseEvent, node: Node) => {
     openPersonModal(node.id)

@@ -210,6 +210,7 @@ export function FamilyTree({ userId, persons, relationships: initialRelationship
   }, [persons, relationships])
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const jsonFileInputRef = React.useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   const handleImportGedcom = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -286,8 +287,185 @@ export function FamilyTree({ userId, persons, relationships: initialRelationship
     }
   }
 
+  const onExportJson = useCallback(async () => {
+    const loadingToast = toast.loading('Preparing JSON backup...')
+
+    try {
+      const [personsResult, relationshipsResult, photosResult, eventsResult] = await Promise.all([
+        supabase.from('persons').select('*').eq('user_id', userId),
+        supabase.from('relationships').select('*').eq('user_id', userId),
+        supabase.from('person_photos').select('*').eq('user_id', userId),
+        supabase.from('life_events').select('*').eq('user_id', userId),
+      ])
+
+      if (personsResult.error) throw personsResult.error
+      if (relationshipsResult.error) throw relationshipsResult.error
+      if (photosResult.error) throw photosResult.error
+      if (eventsResult.error) throw eventsResult.error
+
+      const payload = {
+        version: 1,
+        exported_at: new Date().toISOString(),
+        persons: personsResult.data ?? [],
+        relationships: relationshipsResult.data ?? [],
+        person_photos: photosResult.data ?? [],
+        life_events: eventsResult.data ?? [],
+      }
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.download = `glean-family-tree-backup-${new Date().toISOString().slice(0, 10)}.json`
+      link.href = url
+      link.click()
+      URL.revokeObjectURL(url)
+      toast.dismiss(loadingToast)
+      toast.success('JSON backup downloaded')
+    } catch (error: any) {
+      toast.dismiss(loadingToast)
+      toast.error('Backup Failed: ' + error.message)
+    }
+  }, [supabase, userId])
+
+  const handleImportJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const confirmRestore = window.confirm(
+      'This will replace your current persons, relationships, photos, and life events. Continue?'
+    )
+    if (!confirmRestore) {
+      if (jsonFileInputRef.current) jsonFileInputRef.current.value = ''
+      return
+    }
+
+    const loadingToast = toast.loading('Restoring JSON backup...')
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+
+      if (!Array.isArray(data?.persons) || !Array.isArray(data?.relationships)) {
+        throw new Error('Invalid backup file')
+      }
+
+      const personsData = Array.isArray(data.persons) ? data.persons : []
+      const relationshipsData = Array.isArray(data.relationships) ? data.relationships : []
+      const photosData = Array.isArray(data.person_photos) ? data.person_photos : []
+      const eventsData = Array.isArray(data.life_events) ? data.life_events : []
+      const now = new Date().toISOString()
+
+      const personsPayload = personsData.map((person: any) => ({
+        id: person.id,
+        user_id: userId,
+        name: person.name,
+        gender: person.gender ?? null,
+        date_of_birth: person.date_of_birth ?? null,
+        is_deceased: person.is_deceased ?? null,
+        date_of_death: person.date_of_death ?? null,
+        nickname: person.nickname ?? null,
+        birth_place: person.birth_place ?? null,
+        death_place: person.death_place ?? null,
+        occupation: person.occupation ?? null,
+        biography: person.biography ?? null,
+        notes: person.notes ?? null,
+        position_x: person.position_x ?? null,
+        position_y: person.position_y ?? null,
+        family_id: person.family_id ?? null,
+        is_visible_in_share: person.is_visible_in_share ?? true,
+        created_at: person.created_at ?? now,
+        updated_at: person.updated_at ?? now,
+      }))
+
+      const relationshipsPayload = relationshipsData.map((relationship: any) => ({
+        id: relationship.id,
+        user_id: userId,
+        parent_id: relationship.parent_id,
+        child_id: relationship.child_id,
+        relationship_type: relationship.relationship_type,
+        created_at: relationship.created_at ?? now,
+      }))
+
+      const photosPayload = photosData.map((photo: any) => ({
+        id: photo.id,
+        person_id: photo.person_id,
+        url: photo.url,
+        user_id: userId,
+        is_profile_picture: photo.is_profile_picture ?? null,
+        description: photo.description ?? null,
+        created_at: photo.created_at ?? now,
+      }))
+
+      const eventsPayload = eventsData.map((event: any) => ({
+        id: event.id,
+        person_id: event.person_id,
+        user_id: userId,
+        title: event.title,
+        event_type: event.event_type,
+        date: event.date ?? null,
+        description: event.description ?? null,
+        location: event.location ?? null,
+        created_at: event.created_at ?? now,
+      }))
+
+      const deleteRelationships = supabase.from('relationships').delete().eq('user_id', userId)
+      const deleteEvents = supabase.from('life_events').delete().eq('user_id', userId)
+      const deletePhotos = supabase.from('person_photos').delete().eq('user_id', userId)
+      const deletePersons = supabase.from('persons').delete().eq('user_id', userId)
+
+      const deleteResults = await Promise.all([
+        deleteRelationships,
+        deleteEvents,
+        deletePhotos,
+      ])
+
+      for (const result of deleteResults) {
+        if (result.error) throw result.error
+      }
+
+      const deletePersonsResult = await deletePersons
+      if (deletePersonsResult.error) throw deletePersonsResult.error
+
+      if (personsPayload.length > 0) {
+        const { error } = await supabase.from('persons').insert(personsPayload)
+        if (error) throw error
+      }
+
+      if (relationshipsPayload.length > 0) {
+        const { error } = await supabase
+          .from('relationships')
+          .insert(relationshipsPayload)
+        if (error) throw error
+      }
+
+      if (photosPayload.length > 0) {
+        const { error } = await supabase.from('person_photos').insert(photosPayload)
+        if (error) throw error
+      }
+
+      if (eventsPayload.length > 0) {
+        const { error } = await supabase.from('life_events').insert(eventsPayload)
+        if (error) throw error
+      }
+
+      toast.dismiss(loadingToast)
+      toast.success('JSON backup restored')
+      if (jsonFileInputRef.current) jsonFileInputRef.current.value = ''
+      window.location.reload()
+    } catch (error: any) {
+      toast.dismiss(loadingToast)
+      toast.error('Restore Failed: ' + error.message)
+    }
+  }
+
   const triggerImport = () => {
     fileInputRef.current?.click()
+  }
+
+  const triggerImportJson = () => {
+    jsonFileInputRef.current?.click()
   }
 
   const handleAutoLayout = () => {
@@ -365,9 +543,17 @@ export function FamilyTree({ userId, persons, relationships: initialRelationship
                 <FileText className="mr-2 h-4 w-4" />
                 Export GEDCOM
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={onExportJson}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export JSON Backup
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={triggerImport}>
                 <Upload className="mr-2 h-4 w-4" />
                 Import GEDCOM
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={triggerImportJson}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import JSON Backup
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -379,6 +565,13 @@ export function FamilyTree({ userId, persons, relationships: initialRelationship
         onChange={handleImportGedcom}
         className="hidden"
         accept=".ged,.gedcom"
+      />
+      <input
+        type="file"
+        ref={jsonFileInputRef}
+        onChange={handleImportJson}
+        className="hidden"
+        accept=".json"
       />
     </div>
   )

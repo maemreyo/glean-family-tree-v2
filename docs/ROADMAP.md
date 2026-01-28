@@ -113,15 +113,15 @@ This document outlines the strategic development plan for **Glean Family Tree V2
 - **Objective**: Standard genealogy format support.
 - **Tasks**:
   - [x] GEDCOM Import/Export.
-  - [ ] JSON Backup/Restore.
+  - [x] JSON Backup/Restore.
 
 ### 4.3 Sharing
 - **Objective**: Share the tree with family members.
 - **Tasks**:
   - [x] Generate "Read-only" public links.
-  - [ ] Invite collaborators (roles: viewer/editor, email invite).
-  - [ ] Privacy controls for living people (hide details by default).
-  - [ ] Per-profile visibility toggles (override defaults).
+  - [x] Invite collaborators (roles: viewer/editor, email invite).
+  - [x] Privacy controls for living people (hide details by default).
+  - [x] Per-profile visibility toggles (override defaults).
   - [ ] Confidence/source tagging for facts (confirmed vs speculative).
   - [ ] Stories & traditions on profiles (long-form narrative, timeline integration).
   - [ ] Photo albums grouped by events (weddings, birthdays, reunions).

@@ -17,12 +17,16 @@ export type Database = {
       persons: {
         Row: {
           created_at: string
+          confidence_level: string | null
           date_of_birth: string | null
           family_id: string | null
           gender: string | null
           id: string
+          is_visible_in_share: boolean | null
           name: string
           nickname: string | null
+          source_notes: string | null
+          source_url: string | null
           birth_place: string | null
           death_place: string | null
           is_deceased: boolean | null
@@ -37,12 +41,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          confidence_level?: string | null
           date_of_birth?: string | null
           family_id?: string | null
           gender?: string | null
           id?: string
+          is_visible_in_share?: boolean | null
           name: string
           nickname?: string | null
+          source_notes?: string | null
+          source_url?: string | null
           birth_place?: string | null
           death_place?: string | null
           is_deceased?: boolean | null
@@ -57,12 +65,16 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          confidence_level?: string | null
           date_of_birth?: string | null
           family_id?: string | null
           gender?: string | null
           id?: string
+          is_visible_in_share?: boolean | null
           name?: string
           nickname?: string | null
+          source_notes?: string | null
+          source_url?: string | null
           birth_place?: string | null
           death_place?: string | null
           is_deceased?: boolean | null
@@ -207,6 +219,8 @@ export type Database = {
           expires_at: string | null
           id: string
           is_active: boolean | null
+          invited_email: string | null
+          role: string | null
           token: string
           user_id: string
         }
@@ -215,6 +229,8 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          invited_email?: string | null
+          role?: string | null
           token: string
           user_id: string
         }
@@ -223,6 +239,8 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          invited_email?: string | null
+          role?: string | null
           token?: string
           user_id?: string
         }

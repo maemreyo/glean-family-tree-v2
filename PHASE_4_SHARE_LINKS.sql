@@ -3,6 +3,8 @@ CREATE TABLE shared_links (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) NOT NULL,
   token text UNIQUE NOT NULL,
+  invited_email text,
+  role text DEFAULT 'viewer',
   created_at timestamptz DEFAULT now(),
   expires_at timestamptz,
   is_active boolean DEFAULT true

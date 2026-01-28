@@ -28,6 +28,7 @@ const formSchema = z.object({
   gender: z.string().optional(),
   date_of_birth: z.string().optional().or(z.literal('')),
   is_deceased: z.boolean().default(false),
+  is_visible_in_share: z.boolean().default(true),
   date_of_death: z.string().optional().or(z.literal('')),
   nickname: z.string().optional(),
   birth_place: z.string().optional(),
@@ -35,6 +36,9 @@ const formSchema = z.object({
   occupation: z.string().optional(),
   biography: z.string().optional(),
   notes: z.string().optional(),
+  confidence_level: z.string().optional(),
+  source_url: z.string().optional(),
+  source_notes: z.string().optional(),
 })
 
 interface PersonMetadataFormProps {
@@ -53,6 +57,7 @@ export function PersonMetadataForm({ person, onSuccess, onCancel }: PersonMetada
       gender: person.gender || '',
       date_of_birth: person.date_of_birth ? new Date(person.date_of_birth).toISOString().split('T')[0] : '',
       is_deceased: person.is_deceased || false,
+      is_visible_in_share: person.is_visible_in_share ?? true,
       date_of_death: person.date_of_death ? new Date(person.date_of_death).toISOString().split('T')[0] : '',
       nickname: person.nickname || '',
       birth_place: person.birth_place || '',
@@ -60,6 +65,9 @@ export function PersonMetadataForm({ person, onSuccess, onCancel }: PersonMetada
       occupation: person.occupation || '',
       biography: person.biography || '',
       notes: person.notes || '',
+      confidence_level: person.confidence_level || 'confirmed',
+      source_url: person.source_url || '',
+      source_notes: person.source_notes || '',
     },
   })
 
@@ -70,6 +78,7 @@ export function PersonMetadataForm({ person, onSuccess, onCancel }: PersonMetada
         ...values,
         date_of_birth: values.date_of_birth || null,
         is_deceased: values.is_deceased,
+        is_visible_in_share: values.is_visible_in_share,
         date_of_death: values.is_deceased ? values.date_of_death || null : null,
         gender: values.gender || null,
         nickname: values.nickname || null,
@@ -158,6 +167,27 @@ export function PersonMetadataForm({ person, onSuccess, onCancel }: PersonMetada
               <div className="space-y-1 leading-none">
                 <FormLabel>
                   Deceased?
+                </FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="is_visible_in_share"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  id="is-visible-in-share"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel htmlFor="is-visible-in-share">
+                  Visible in shared links
                 </FormLabel>
               </div>
             </FormItem>

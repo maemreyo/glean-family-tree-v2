@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   useSharedLinks,
   useCreateSharedLink,
@@ -26,9 +27,13 @@ interface ShareDialogProps {
 
 export function ShareDialog({ userId }: ShareDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [invitedEmail, setInvitedEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'viewer' | 'editor'>('viewer')
   const { data: links, isLoading } = useSharedLinks(userId)
   const createLink = useCreateSharedLink()
   const deleteLink = useDeleteSharedLink()
+  const selectClassName =
+    'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
 
   const handleCreateLink = async () => {
     try {
@@ -39,10 +44,30 @@ export function ShareDialog({ userId }: ShareDialogProps) {
         user_id: userId,
         token,
         is_active: true,
+        role: 'viewer',
       })
       toast.success('Shared link created')
     } catch (error) {
       toast.error('Failed to create shared link')
+      console.error(error)
+    }
+  }
+
+  const handleInvite = async () => {
+    try {
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+
+      await createLink.mutateAsync({
+        user_id: userId,
+        token,
+        is_active: true,
+        role: inviteRole,
+        invited_email: invitedEmail.trim(),
+      })
+      setInvitedEmail('')
+      toast.success('Invite sent')
+    } catch (error) {
+      toast.error('Failed to send invite')
       console.error(error)
     }
   }
@@ -80,6 +105,43 @@ export function ShareDialog({ userId }: ShareDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Invite Collaborator</h4>
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">Invite Email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={invitedEmail}
+                onChange={(event) => setInvitedEmail(event.target.value)}
+                placeholder="name@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-role">Role</Label>
+              <select
+                id="invite-role"
+                className={selectClassName}
+                value={inviteRole}
+                onChange={(event) =>
+                  setInviteRole(event.target.value as 'viewer' | 'editor')
+                }
+              >
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+              </select>
+            </div>
+            <Button
+              onClick={handleInvite}
+              disabled={createLink.isPending || !invitedEmail.trim()}
+              size="sm"
+            >
+              {createLink.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Send Invite
+            </Button>
+          </div>
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium">Active Links</h4>
             <Button

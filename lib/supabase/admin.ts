@@ -54,10 +54,20 @@ export async function getSharedTreeData(token: string) {
     return null
   }
 
+  const visiblePersons = (personsResult.data ?? []).filter(
+    (person) => person.is_visible_in_share ?? true
+  )
+  const visiblePersonIds = new Set(visiblePersons.map((person) => person.id))
+  const visibleRelationships = (relationshipsResult.data ?? []).filter(
+    (relationship) =>
+      visiblePersonIds.has(relationship.parent_id) &&
+      visiblePersonIds.has(relationship.child_id)
+  )
+
   return {
     link,
     userId,
-    persons: personsResult.data,
-    relationships: relationshipsResult.data
+    persons: visiblePersons,
+    relationships: visibleRelationships
   }
 }

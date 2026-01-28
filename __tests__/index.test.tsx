@@ -11,7 +11,7 @@ describe("Home", () => {
     render(<Home />);
 
     const text = screen.getByText(
-      /Glean Family Tree helps you organize and visualize your family connections/i,
+      /Glean Family Tree helps you organize, visualize, and share your family history/i,
     );
 
     expect(text).toBeInTheDocument();

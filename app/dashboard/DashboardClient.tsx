@@ -163,7 +163,7 @@ export function DashboardClient({
         {/* Action Bar */}
         <div className="flex items-center justify-between border-b bg-white px-6 py-2 shadow-sm dark:bg-gray-800 dark:border-gray-700 shrink-0 z-10">
           <h3 className="text-lg font-bold">
-            {activeTab === 'tree' ? 'Family Tree Visualization' : 'Persons List'}
+            {/* {activeTab === 'tree' ? 'Family Tree Visualization' : 'Persons List'} */}
           </h3>
           
           <div className="flex items-center gap-4">

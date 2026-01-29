@@ -92,7 +92,13 @@ export function FamilyTreeControls({
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-[360px]">
+          <PopoverContent 
+            align="end" 
+            className="w-[360px] p-0" 
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             <FilterPanel keywordInputRef={keywordInputRef} />
           </PopoverContent>
         </Popover>

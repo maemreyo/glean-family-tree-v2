@@ -25,6 +25,13 @@ interface SearchFocusProps {
 export function SearchFocus({ persons, onFocus }: SearchFocusProps) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
+  const [search, setSearch] = useState('')
+
+  const filteredPersons = persons
+    .filter((person) =>
+      person.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .slice(0, 20)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -42,19 +49,24 @@ export function SearchFocus({ persons, onFocus }: SearchFocusProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Search person..." />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Search person..." 
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>No person found.</CommandEmpty>
             <CommandGroup>
-              {persons.map((person) => (
+              {filteredPersons.map((person) => (
                 <CommandItem
                   key={person.id}
-                  value={person.name}
+                  value={person.id}
                   onSelect={() => {
                     setValue(person.id === value ? '' : person.id)
                     onFocus(person.id)
                     setOpen(false)
+                    setSearch('')
                   }}
                 >
                   <Check

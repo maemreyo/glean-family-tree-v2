@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react'
 import { Node, Edge } from 'reactflow'
 import { toast } from 'sonner'
+import { PersonWithPhoto } from '@/types/app'
 
 const MAX_HISTORY_SIZE = 50
 
@@ -10,7 +11,7 @@ interface UseFamilyTreeHistoryProps {
   setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void
   setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void
   batchSavePositions: (nodes: Node[]) => Promise<void>
-  treeFilters?: any // To reset history when filters change
+  treeFilters?: PersonWithPhoto[] // To reset history when filters change
 }
 
 export function useFamilyTreeHistory({

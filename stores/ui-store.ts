@@ -6,6 +6,36 @@ import { createStore } from 'zustand/vanilla'
  * 
  * Store này quản lý tất cả UI state không liên quan đến server data
  */
+export type TreeFilters = {
+  gender: {
+    male: boolean
+    female: boolean
+    other: boolean
+    unknown: boolean
+  }
+  status: {
+    living: boolean
+    deceased: boolean
+    unknown: boolean
+  }
+  birthYear: {
+    min: string
+    max: string
+  }
+  relationships: {
+    parent: boolean
+    child: boolean
+    spouse: boolean
+  }
+  hasPhoto: boolean
+  hasBiography: boolean
+  birthPlace: string
+  deathPlace: string
+  occupation: string
+  keyword: string
+  tags: string
+}
+
 export type UIStore = {
   // Sidebar state
   sidebarOpen: boolean
@@ -23,6 +53,11 @@ export type UIStore = {
   treePosition: { x: number; y: number }
   setTreePosition: (pos: { x: number; y: number }) => void
   resetTreeView: () => void
+  showStatsPanel: boolean
+  toggleStatsPanel: () => void
+  treeFilters: TreeFilters
+  setTreeFilters: (updater: (current: TreeFilters) => TreeFilters) => void
+  resetTreeFilters: () => void
 
   // Form state
   isFormDirty: boolean
@@ -40,6 +75,35 @@ export type UIStore = {
 
 const DEFAULT_TREE_POSITION = { x: 0, y: 0 }
 const DEFAULT_ZOOM = 1
+const DEFAULT_TREE_FILTERS: TreeFilters = {
+  gender: {
+    male: true,
+    female: true,
+    other: true,
+    unknown: true,
+  },
+  status: {
+    living: true,
+    deceased: true,
+    unknown: true,
+  },
+  birthYear: {
+    min: '',
+    max: '',
+  },
+  relationships: {
+    parent: true,
+    child: true,
+    spouse: true,
+  },
+  hasPhoto: false,
+  hasBiography: false,
+  birthPlace: '',
+  deathPlace: '',
+  occupation: '',
+  keyword: '',
+  tags: '',
+}
 
 /**
  * Factory function để tạo UI store
@@ -69,6 +133,15 @@ export const createUIStore = () => {
         treeZoom: DEFAULT_ZOOM,
         treePosition: DEFAULT_TREE_POSITION,
       }),
+    showStatsPanel: false,
+    toggleStatsPanel: () =>
+      set((state) => ({ showStatsPanel: !state.showStatsPanel })),
+    treeFilters: DEFAULT_TREE_FILTERS,
+    setTreeFilters: (updater) =>
+      set((state) => ({
+        treeFilters: updater(state.treeFilters),
+      })),
+    resetTreeFilters: () => set({ treeFilters: DEFAULT_TREE_FILTERS }),
 
     // Form
     isFormDirty: false,

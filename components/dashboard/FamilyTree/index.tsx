@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Connection,
   addEdge,
   Node,
+  Edge,
   ReactFlowInstance,
   OnNodesChange,
   OnEdgesChange,
@@ -53,20 +54,167 @@ export function FamilyTree({
 
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
+  const treeFilters = useUIStore((state) => state.treeFilters)
   const { mutate: createRelationship } = useCreateRelationship()
   const { mutateAsync: deletePerson } = useDeletePerson()
   const { mutateAsync: deleteRelationship } = useDeleteRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
 
+  const relationshipIndex = useMemo(() => {
+    const index = new Map<string, { isParent: boolean; isChild: boolean; isSpouse: boolean }>()
+    persons.forEach((person) => {
+      index.set(person.id, { isParent: false, isChild: false, isSpouse: false })
+    })
+    relationships.forEach((rel) => {
+      if (!index.has(rel.from_person_id)) {
+        index.set(rel.from_person_id, { isParent: false, isChild: false, isSpouse: false })
+      }
+      if (!index.has(rel.to_person_id)) {
+        index.set(rel.to_person_id, { isParent: false, isChild: false, isSpouse: false })
+      }
+      if (rel.type === 'parent') {
+        index.get(rel.from_person_id)!.isParent = true
+        index.get(rel.to_person_id)!.isChild = true
+      }
+      if (rel.type === 'spouse') {
+        index.get(rel.from_person_id)!.isSpouse = true
+        index.get(rel.to_person_id)!.isSpouse = true
+      }
+    })
+    return index
+  }, [persons, relationships])
+
+  const filteredPersons = useMemo(() => {
+    const normalize = (value: string | null | undefined) => value?.toLowerCase().trim() ?? ''
+    const minYearRaw = treeFilters.birthYear.min.trim()
+    const maxYearRaw = treeFilters.birthYear.max.trim()
+    const minYear = minYearRaw ? Number(minYearRaw) : null
+    const maxYear = maxYearRaw ? Number(maxYearRaw) : null
+    const hasMinYear = minYear !== null && Number.isFinite(minYear)
+    const hasMaxYear = maxYear !== null && Number.isFinite(maxYear)
+    const keyword = normalize(treeFilters.keyword)
+    const birthPlace = normalize(treeFilters.birthPlace)
+    const deathPlace = normalize(treeFilters.deathPlace)
+    const occupation = normalize(treeFilters.occupation)
+    const tagTokens = treeFilters.tags
+      .split(',')
+      .map((token) => token.trim().toLowerCase())
+      .filter(Boolean)
+    const relationshipFilters = treeFilters.relationships
+    const isAllRelationshipsSelected =
+      relationshipFilters.parent &&
+      relationshipFilters.child &&
+      relationshipFilters.spouse
+    const hasAnyRelationshipFilter =
+      relationshipFilters.parent ||
+      relationshipFilters.child ||
+      relationshipFilters.spouse
+
+    return persons.filter((person) => {
+      const genderValue = normalize(person.gender)
+      const genderKey =
+        !genderValue
+          ? 'unknown'
+          : genderValue === 'male' || genderValue === 'm' || genderValue === 'nam'
+            ? 'male'
+            : genderValue === 'female' || genderValue === 'f' || genderValue === 'nu' || genderValue === 'nữ'
+              ? 'female'
+              : 'other'
+      if (!treeFilters.gender[genderKey as keyof typeof treeFilters.gender]) return false
+
+      const statusKey =
+        person.is_deceased === true
+          ? 'deceased'
+          : person.is_deceased === false
+            ? 'living'
+            : 'unknown'
+      if (!treeFilters.status[statusKey as keyof typeof treeFilters.status]) return false
+
+      if (hasMinYear || hasMaxYear) {
+        const birthYearMatch = person.date_of_birth?.match(/\d{4}/)
+        const birthYear = birthYearMatch ? Number(birthYearMatch[0]) : null
+        if (hasMinYear && (birthYear === null || birthYear < minYear)) return false
+        if (hasMaxYear && (birthYear === null || birthYear > maxYear)) return false
+      }
+
+      if (treeFilters.hasPhoto && (!person.person_photos || person.person_photos.length === 0)) {
+        return false
+      }
+      if (treeFilters.hasBiography && !person.biography?.trim()) {
+        return false
+      }
+
+      if (birthPlace && !normalize(person.birth_place).includes(birthPlace)) return false
+      if (deathPlace && !normalize(person.death_place).includes(deathPlace)) return false
+      if (occupation && !normalize(person.occupation).includes(occupation)) return false
+
+      if (keyword) {
+        const keywordSource = [
+          person.name,
+          person.nickname,
+          person.biography,
+          person.notes,
+          person.source_notes,
+          person.birth_place,
+          person.death_place,
+          person.occupation,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        if (!keywordSource.includes(keyword)) return false
+      }
+
+      if (tagTokens.length > 0) {
+        const tagSource = [person.notes, person.source_notes, person.biography]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        const tagsMatch = tagTokens.every((token) => tagSource.includes(token))
+        if (!tagsMatch) return false
+      }
+
+      if (!isAllRelationshipsSelected) {
+        if (!hasAnyRelationshipFilter) return false
+        const flags = relationshipIndex.get(person.id) ?? {
+          isParent: false,
+          isChild: false,
+          isSpouse: false,
+        }
+        const matchesRelationship =
+          (relationshipFilters.parent && flags.isParent) ||
+          (relationshipFilters.child && flags.isChild) ||
+          (relationshipFilters.spouse && flags.isSpouse)
+        if (!matchesRelationship) return false
+      }
+
+      return true
+    })
+  }, [persons, relationshipIndex, treeFilters])
+
+  const filteredRelationships = useMemo(() => {
+    const allowedPersonIds = new Set(filteredPersons.map((person) => person.id))
+    const allowParentEdges =
+      treeFilters.relationships.parent || treeFilters.relationships.child
+    return relationships.filter((rel) => {
+      if (!allowedPersonIds.has(rel.from_person_id) || !allowedPersonIds.has(rel.to_person_id)) {
+        return false
+      }
+      if (rel.type === 'spouse') return treeFilters.relationships.spouse
+      if (rel.type === 'parent') return allowParentEdges
+      return true
+    })
+  }, [filteredPersons, relationships, treeFilters.relationships])
+
   // Custom hooks
   const { nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange } = useFamilyTreeLayout({
-    persons,
-    relationships,
+    persons: filteredPersons,
+    relationships: filteredRelationships,
   })
 
   const { onExport, onExportGedcom, onExportJson } = useFamilyTreeExport({
-    persons,
-    relationships,
+    persons: filteredPersons,
+    relationships: filteredRelationships,
     nodes,
     rfInstance,
     userId,
@@ -86,6 +234,72 @@ export function FamilyTree({
     batchSavePositions,
   } = usePositionManagement({ readOnly, userId })
 
+  const historyRef = useRef<{ past: { nodes: Node[]; edges: Edge[] }[]; future: { nodes: Node[]; edges: Edge[] }[] }>({
+    past: [],
+    future: [],
+  })
+  const isApplyingHistoryRef = useRef(false)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+
+  const updateHistoryState = useCallback(() => {
+    setCanUndo(historyRef.current.past.length > 0)
+    setCanRedo(historyRef.current.future.length > 0)
+  }, [])
+
+  const createSnapshot = useCallback(() => {
+    return {
+      nodes: structuredClone(nodes),
+      edges: structuredClone(edges),
+    }
+  }, [nodes, edges])
+
+  const pushHistory = useCallback(() => {
+    if (isApplyingHistoryRef.current) return
+    historyRef.current.past.push(createSnapshot())
+    historyRef.current.future = []
+    if (historyRef.current.past.length > 50) {
+      historyRef.current.past.shift()
+    }
+    updateHistoryState()
+  }, [createSnapshot, updateHistoryState])
+
+  const handleUndo = useCallback(() => {
+    if (historyRef.current.past.length === 0) return
+    const currentSnapshot = createSnapshot()
+    const previousSnapshot = historyRef.current.past.pop()
+    if (!previousSnapshot) return
+    historyRef.current.future.push(currentSnapshot)
+    isApplyingHistoryRef.current = true
+    setNodes(previousSnapshot.nodes)
+    setEdges(previousSnapshot.edges)
+    updateHistoryState()
+  }, [createSnapshot, setEdges, setNodes, updateHistoryState])
+
+  const handleRedo = useCallback(() => {
+    if (historyRef.current.future.length === 0) return
+    const currentSnapshot = createSnapshot()
+    const nextSnapshot = historyRef.current.future.pop()
+    if (!nextSnapshot) return
+    historyRef.current.past.push(currentSnapshot)
+    isApplyingHistoryRef.current = true
+    setNodes(nextSnapshot.nodes)
+    setEdges(nextSnapshot.edges)
+    updateHistoryState()
+  }, [createSnapshot, setEdges, setNodes, updateHistoryState])
+
+  useEffect(() => {
+    if (isApplyingHistoryRef.current) {
+      isApplyingHistoryRef.current = false
+    }
+  }, [nodes, edges])
+
+  useEffect(() => {
+    historyRef.current.past = []
+    historyRef.current.future = []
+    updateHistoryState()
+  }, [treeFilters, updateHistoryState])
+
   // Handlers
   const refreshSharedChildEdges = useCallback(
     (movedNode: Node) => {
@@ -97,13 +311,19 @@ export function FamilyTree({
     [nodes, setEdges]
   )
 
+  const dragNodeIdRef = useRef<string | null>(null)
+
   const onNodeDrag = useCallback(
     (_: any, node: Node) => {
       if (readOnly) return
+      if (dragNodeIdRef.current !== node.id) {
+        pushHistory()
+        dragNodeIdRef.current = node.id
+      }
       saveNodePosition(node.id, node.position.x, node.position.y)
       refreshSharedChildEdges(node)
     },
-    [saveNodePosition, readOnly, refreshSharedChildEdges]
+    [pushHistory, readOnly, refreshSharedChildEdges, saveNodePosition]
   )
 
   const onNodeDragStop = useCallback(
@@ -111,6 +331,7 @@ export function FamilyTree({
       if (readOnly) return
       saveNodePosition(node.id, node.position.x, node.position.y)
       refreshSharedChildEdges(node)
+      dragNodeIdRef.current = null
     },
     [saveNodePosition, readOnly, refreshSharedChildEdges]
   )
@@ -149,6 +370,7 @@ export function FamilyTree({
     async (relationshipId: string) => {
       if (readOnly) return
       try {
+        pushHistory()
         await deleteRelationship({ id: relationshipId, userId })
         setEdges((eds) => eds.filter((edge) => edge.id !== relationshipId))
         toast.success('Relationship deleted')
@@ -157,7 +379,7 @@ export function FamilyTree({
         toast.error('Failed to delete relationship')
       }
     },
-    [deleteRelationship, readOnly, setEdges, userId]
+    [deleteRelationship, pushHistory, readOnly, setEdges, userId]
   )
 
   const onConnect = useCallback(
@@ -170,6 +392,7 @@ export function FamilyTree({
       const relationshipType = isSpouseConnection ? 'spouse' : 'parent'
 
       // Optimistic update
+      pushHistory()
       setEdges((eds) =>
         addEdge(
           {
@@ -196,7 +419,7 @@ export function FamilyTree({
         })
       }
     },
-    [setEdges, createRelationship, userId, readOnly]
+    [pushHistory, setEdges, createRelationship, userId, readOnly]
   )
 
   const handleNodesChange = useCallback<OnNodesChange>(
@@ -239,6 +462,7 @@ export function FamilyTree({
         .map((change) => change.id)
 
       if (removedIds.length > 0) {
+        pushHistory()
         removedIds.forEach(async (id) => {
           try {
             await deleteRelationship({ id, userId })
@@ -252,7 +476,7 @@ export function FamilyTree({
 
       onEdgesChange(changes)
     },
-    [readOnly, onEdgesChange, deleteRelationship, userId]
+    [readOnly, onEdgesChange, deleteRelationship, userId, pushHistory]
   )
 
   const onNodeClick = useCallback(
@@ -311,6 +535,10 @@ export function FamilyTree({
           onExportJson={onExportJson}
           onImportGedcom={triggerImport}
           onImportJson={triggerImportJson}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
       </FamilyTreeCanvas>
 

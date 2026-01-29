@@ -36,10 +36,18 @@ const mockUseUpdatePerson = jest.fn(() => ({ mutate: mockUpdatePerson }))
 const mockCreateRelationship = jest.fn()
 const mockUseCreateRelationship = jest.fn(() => ({ mutate: mockCreateRelationship }))
 
+const mockDeletePerson = jest.fn()
+const mockUseDeletePerson = jest.fn(() => ({ mutateAsync: mockDeletePerson }))
+
+const mockDeleteRelationship = jest.fn()
+const mockUseDeleteRelationship = jest.fn(() => ({ mutateAsync: mockDeleteRelationship }))
+
 jest.mock('@/lib/supabase/queries', () => ({
   useRelationships: () => mockUseRelationships(),
   useUpdatePerson: () => mockUseUpdatePerson(),
   useCreateRelationship: () => mockUseCreateRelationship(),
+  useDeletePerson: () => mockUseDeletePerson(),
+  useDeleteRelationship: () => mockUseDeleteRelationship(),
 }))
 
 // 3. Mock ReactFlow hooks
@@ -99,10 +107,26 @@ jest.mock('dagre', () => ({
 }))
 
 jest.mock('@/providers/ui-store-provider', () => ({
-  useUIStore: jest.fn().mockReturnValue({
-    searchQuery: '',
-    setSearchQuery: jest.fn(),
-  }),
+  useUIStore: jest.fn((selector) =>
+    selector({
+      openPersonModal: jest.fn(),
+      treeFilters: {
+        gender: { male: true, female: true, other: true, unknown: true },
+        status: { living: true, deceased: true, unknown: true },
+        birthYear: { min: '', max: '' },
+        relationships: { parent: true, child: true, spouse: true },
+        hasPhoto: false,
+        hasBiography: false,
+        birthPlace: '',
+        deathPlace: '',
+        occupation: '',
+        keyword: '',
+        tags: '',
+      },
+      showStatsPanel: false,
+      toggleStatsPanel: jest.fn(),
+    })
+  ),
 }))
 
 jest.mock('@/components/dashboard/FamilyTree/hooks/useFamilyTreeExport', () => ({
@@ -124,6 +148,13 @@ jest.mock('@/components/dashboard/FamilyTree/hooks/useFamilyTreeImport', () => (
   }))
 }))
 
+jest.mock('@/components/dashboard/FamilyTree/hooks/usePositionManagement', () => ({
+  usePositionManagement: jest.fn(() => ({
+    saveNodePosition: jest.fn(),
+    batchSavePositions: jest.fn(),
+  })),
+}))
+
 jest.mock('@/components/dashboard/FamilyTree/FamilyTreeCanvas', () => ({
   FamilyTreeCanvas: ({ children }: any) => <div>{children}</div>
 }))
@@ -133,7 +164,8 @@ jest.mock('@/components/dashboard/FamilyTree/FamilyTreeControls', () => ({
 }))
 
 jest.mock('@/components/dashboard/FamilyTree/utils/dagre-layout', () => ({
-  getLayoutedElements: jest.fn((nodes) => ({ nodes, edges: [] }))
+  getLayoutedElements: jest.fn((nodes) => ({ nodes, edges: [] })),
+  syncSpouseData: jest.fn((nodes, edges) => ({ nodes, edges })),
 }))
 
 // --- Tests ---

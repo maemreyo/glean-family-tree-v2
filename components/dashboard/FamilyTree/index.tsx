@@ -184,7 +184,7 @@ export function FamilyTree({
     updateHistoryState()
   }, [createSnapshot, updateHistoryState])
 
-  const handleUndo = useCallback(() => {
+  const handleUndo = useCallback(async () => {
     if (historyRef.current.past.length === 0) return
     const currentSnapshot = createSnapshot()
     const previousSnapshot = historyRef.current.past.pop()
@@ -194,9 +194,16 @@ export function FamilyTree({
     setNodes(previousSnapshot.nodes)
     setEdges(previousSnapshot.edges)
     updateHistoryState()
-  }, [createSnapshot, setEdges, setNodes, updateHistoryState])
 
-  const handleRedo = useCallback(() => {
+    try {
+      await batchSavePositions(previousSnapshot.nodes)
+    } catch (error) {
+      console.error('Failed to save undo state:', error)
+      toast.error('Failed to save undo state')
+    }
+  }, [createSnapshot, setEdges, setNodes, updateHistoryState, batchSavePositions])
+
+  const handleRedo = useCallback(async () => {
     if (historyRef.current.future.length === 0) return
     const currentSnapshot = createSnapshot()
     const nextSnapshot = historyRef.current.future.pop()
@@ -206,7 +213,14 @@ export function FamilyTree({
     setNodes(nextSnapshot.nodes)
     setEdges(nextSnapshot.edges)
     updateHistoryState()
-  }, [createSnapshot, setEdges, setNodes, updateHistoryState])
+
+    try {
+      await batchSavePositions(nextSnapshot.nodes)
+    } catch (error) {
+      console.error('Failed to save redo state:', error)
+      toast.error('Failed to save redo state')
+    }
+  }, [createSnapshot, setEdges, setNodes, updateHistoryState, batchSavePositions])
 
   useEffect(() => {
     if (isApplyingHistoryRef.current) {

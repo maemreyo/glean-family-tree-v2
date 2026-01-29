@@ -23,9 +23,10 @@ import { format } from 'date-fns'
 
 interface ShareDialogProps {
   userId: string
+  trigger?: React.ReactNode
 }
 
-export function ShareDialog({ userId }: ShareDialogProps) {
+export function ShareDialog({ userId, trigger }: ShareDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [invitedEmail, setInvitedEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'viewer' | 'editor'>('viewer')
@@ -91,10 +92,12 @@ export function ShareDialog({ userId }: ShareDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Share2 className="h-4 w-4" />
-          Share
-        </Button>
+        {trigger || (
+          <Button variant="outline" size="sm" className="gap-2">
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

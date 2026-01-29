@@ -130,46 +130,21 @@ export function DashboardClient({
   // Render
   // ============================================
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white shadow-lg transition-transform duration-300 ease-in-out dark:bg-gray-800 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:relative lg:translate-x-0`}
-      >
-        <div className="flex h-16 items-center justify-center border-b px-4 dark:border-gray-700">
+    <div className="flex h-screen overflow-hidden flex-col">
+      {/* Header */}
+      <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700 shrink-0 z-10 relative">
+        <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold">Family Tree</h1>
         </div>
-        <nav className="p-4">
-          <div className="mb-4 rounded-lg bg-gray-100 p-3 dark:bg-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Logged in as:
-            </p>
-            <p className="truncate text-sm font-bold">{userEmail}</p>
-          </div>
-          
-          <button
-            onClick={toggleSidebar}
-            className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 lg:hidden"
-          >
-            Close Sidebar
-          </button>
-        </nav>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-          <button
-            onClick={toggleSidebar}
-            className="rounded-md p-2 hover:bg-gray-100 lg:hidden dark:hover:bg-gray-700"
-          >
-            ☰
-          </button>
-          <h2 className="text-lg font-semibold">Dashboard</h2>
-          
-          {/* Toast Notification */}
+        <div className="flex items-center gap-4">
+          <div className="hidden text-right sm:block">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Logged in as</p>
+            <p className="text-sm font-bold">{userEmail}</p>
+          </div>
+        </div>
+        
+        {/* Toast Notification */}
           {toast.visible && (
             <div
               className={`absolute right-4 top-20 z-50 rounded-md px-4 py-2 text-white shadow-lg ${
@@ -185,60 +160,69 @@ export function DashboardClient({
           )}
         </header>
 
-        {/* Content Body */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6 dark:bg-gray-900">
-          <div className="mx-auto max-w-6xl">
-            {/* Controls */}
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex gap-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
-                <button
-                  onClick={() => setActiveTab('tree')}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    activeTab === 'tree'
-                      ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Tree View
-                </button>
-                <button
-                  onClick={() => setActiveTab('list')}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    activeTab === 'list'
-                      ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  List View
-                </button>
-              </div>
-
-              <div className="relative">
+        {/* Action Bar */}
+        <div className="flex items-center justify-between border-b bg-white px-6 py-2 shadow-sm dark:bg-gray-800 dark:border-gray-700 shrink-0 z-10">
+          <h3 className="text-lg font-bold">
+            {activeTab === 'tree' ? 'Family Tree Visualization' : 'Persons List'}
+          </h3>
+          
+          <div className="flex items-center gap-4">
+            {activeTab === 'list' && (
+              <div className="relative w-64">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search persons..."
-                  className="w-full rounded-md border border-gray-300 px-4 py-2 pl-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
+                  className="w-full rounded-md border border-gray-300 px-4 py-1.5 pl-9 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
                 />
-                <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                <span className="absolute left-3 top-2 text-gray-400 text-xs">🔍</span>
               </div>
+            )}
+            
+            <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+              <button
+                onClick={() => setActiveTab('tree')}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === 'tree'
+                    ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Tree
+              </button>
+              <button
+                onClick={() => setActiveTab('list')}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === 'list'
+                    ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                List
+              </button>
             </div>
+          </div>
+        </div>
 
+        {/* Content Body */}
+        <main className={`flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 ${activeTab === 'list' ? 'overflow-y-auto p-6' : 'relative'}`}>
+          <div className={`${activeTab === 'list' ? 'mx-auto max-w-6xl' : 'h-full w-full'}`}>
+            
             {/* Content View */}
             {isLoading ? (
-              <div className="mb-8 w-full">
-                <h3 className="mb-4 text-lg font-bold">Loading...</h3>
-                {activeTab === 'tree' ? <TreeSkeleton /> : <ListSkeleton />}
+              <div className="h-full w-full flex items-center justify-center">
+                <div className="text-center">
+                  <h3 className="mb-4 text-lg font-bold">Loading...</h3>
+                  {activeTab === 'tree' ? <TreeSkeleton /> : <ListSkeleton />}
+                </div>
               </div>
             ) : activeTab === 'tree' ? (
-              <div className="mb-8 h-[500px] w-full">
-                 <h3 className="mb-4 text-lg font-bold">Family Tree Visualization</h3>
-                 <FamilyTree userId={userId} persons={filteredPersons} />
+              <div className="h-full w-full">
+                 <FamilyTree userId={userId} persons={persons} />
               </div>
             ) : (
               <div className="mb-8 w-full">
-                <h3 className="mb-4 text-lg font-bold">Persons List ({filteredPersons.length})</h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredPersons.map((person) => (
                     <div 
@@ -294,6 +278,7 @@ export function DashboardClient({
             </div>
 
             {/* Persons List */}
+            {activeTab === 'list' && (
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-bold">Persons List ({persons.length})</h3>
@@ -346,9 +331,9 @@ export function DashboardClient({
                 </ul>
               )}
             </div>
+            )}
           </div>
         </main>
-      </div>
 
       <RelationshipModal
         isOpen={isRelationshipModalOpen}

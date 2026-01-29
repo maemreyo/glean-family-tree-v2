@@ -9,6 +9,7 @@ import {
   BarChart3,
   ArrowLeft,
   ArrowRight,
+  Share2,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -79,75 +80,86 @@ export function FamilyTreeControls({
   return (
     <div className="flex gap-2">
       <SearchFocus persons={persons} onFocus={onFocus} />
-      {!readOnly && <ShareDialog userId={userId} />}
 
-      <Button onClick={onAutoLayout} variant="outline" size="sm" className="gap-2" disabled={isBusy}>
-        <RotateCw className="h-4 w-4" />
-        Auto Layout
-      </Button>
+      <div className="flex items-center gap-1 rounded-md border border-input bg-background shadow-xs dark:bg-input/30 dark:border-input p-1">
+        <Button onClick={onAutoLayout} variant="ghost" size="icon" title="Auto Layout" disabled={isBusy} className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
+          <RotateCw className="h-4 w-4" />
+        </Button>
 
-      <Popover open={filterOpen} onOpenChange={onFilterOpenChange} modal={false}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <SlidersHorizontal className="h-4 w-4" />
-            Filters
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-[360px]">
-          <FilterPanel keywordInputRef={keywordInputRef} />
-        </PopoverContent>
-      </Popover>
+        <Popover open={filterOpen} onOpenChange={onFilterOpenChange} modal={false}>
+          <PopoverTrigger asChild>
+            <Button variant={filterOpen ? 'secondary' : 'ghost'} size="icon" title="Filters" className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[360px]">
+            <FilterPanel keywordInputRef={keywordInputRef} />
+          </PopoverContent>
+        </Popover>
 
-      <Button
-        onClick={toggleStatsPanel}
-        variant={showStatsPanel ? 'default' : 'outline'}
-        size="sm"
-        className="gap-2"
-      >
-        <BarChart3 className="h-4 w-4" />
-        Stats
-      </Button>
+        <Button
+          onClick={toggleStatsPanel}
+          variant={showStatsPanel ? 'secondary' : 'ghost'}
+          size="icon"
+          title="Statistics"
+          className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+        >
+          <BarChart3 className="h-4 w-4" />
+        </Button>
+      </div>
 
-      <Button onClick={onUndo} variant="outline" size="sm" className="gap-2" disabled={!canUndo}>
-        <ArrowLeft className="h-4 w-4" />
-        Undo
-      </Button>
+      <div className="flex items-center gap-1 rounded-md border border-input bg-background shadow-xs dark:bg-input/30 dark:border-input p-1">
+        <Button onClick={onUndo} variant="ghost" size="icon" title="Undo" disabled={!canUndo} className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
 
-      <Button onClick={onRedo} variant="outline" size="sm" className="gap-2" disabled={!canRedo}>
-        <ArrowRight className="h-4 w-4" />
-        Redo
-      </Button>
+        <Button onClick={onRedo} variant="ghost" size="icon" title="Redo" disabled={!canRedo} className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2" disabled={isBusy}>
-            <FileDown className="h-4 w-4" />
-            Export
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onExport} disabled={isBusy}>
-            <ImageIcon className="mr-2 h-4 w-4" />
-            Export as Image (PNG)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportGedcom} disabled={isBusy}>
-            <FileText className="mr-2 h-4 w-4" />
-            Export GEDCOM
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportJson} disabled={isBusy}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Export JSON Backup
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onImportGedcom} disabled={isBusy}>
-            <Upload className="mr-2 h-4 w-4" />
-            Import GEDCOM
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onImportJson} disabled={isBusy}>
-            <Upload className="mr-2 h-4 w-4" />
-            Import JSON Backup
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-1 rounded-md border border-input bg-background shadow-xs dark:bg-input/30 dark:border-input p-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="Export / Import" disabled={isBusy} className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
+              <FileDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onExport} disabled={isBusy}>
+              <ImageIcon className="mr-2 h-4 w-4" />
+              Export as Image (PNG)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onExportGedcom} disabled={isBusy}>
+              <FileText className="mr-2 h-4 w-4" />
+              Export GEDCOM
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onExportJson} disabled={isBusy}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Export JSON Backup
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onImportGedcom} disabled={isBusy}>
+              <Upload className="mr-2 h-4 w-4" />
+              Import GEDCOM
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onImportJson} disabled={isBusy}>
+              <Upload className="mr-2 h-4 w-4" />
+              Import JSON Backup
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {!readOnly && (
+          <ShareDialog
+            userId={userId}
+            trigger={
+              <Button variant="ghost" size="icon" title="Share" className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
+                <Share2 className="h-4 w-4" />
+              </Button>
+            }
+          />
+        )}
+      </div>
     </div>
   )
 }

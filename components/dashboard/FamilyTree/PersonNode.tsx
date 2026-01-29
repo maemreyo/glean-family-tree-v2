@@ -57,7 +57,7 @@ export function PersonNode({ id, data }: NodeProps) {
       )}
       
       <div
-        className={`person-node flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-card text-card-foreground p-2 shadow-sm transition-all hover:shadow-md ${
+        className={`person-node flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-card text-card-foreground p-2 shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800/90 ${
         hasSpouses ? 'ring-2 ring-[color:var(--spouse-ring)]' : ''
       }`}
         data-status={statusKey}

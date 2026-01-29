@@ -27,10 +27,10 @@ import { RefObject, useEffect } from 'react'
 interface FamilyTreeControlsProps {
   userId: string
   readOnly?: boolean
-  onAutoLayout: () => void
-  onExport: () => void
-  onExportGedcom: () => void
-  onExportJson: () => void
+  onAutoLayout: () => void | Promise<void>
+  onExport: () => void | Promise<void>
+  onExportGedcom: () => void | Promise<void>
+  onExportJson: () => void | Promise<void>
   onImportGedcom: () => void
   onImportJson: () => void
   onUndo: () => void
@@ -40,6 +40,7 @@ interface FamilyTreeControlsProps {
   filterOpen: boolean
   onFilterOpenChange: (open: boolean) => void
   keywordInputRef?: RefObject<HTMLInputElement | null>
+  isBusy?: boolean
 }
 
 export function FamilyTreeControls({
@@ -58,6 +59,7 @@ export function FamilyTreeControls({
   filterOpen,
   onFilterOpenChange,
   keywordInputRef,
+  isBusy = false,
 }: FamilyTreeControlsProps) {
   const treeFilters = useUIStore((state) => state.treeFilters)
   const setTreeFilters = useUIStore((state) => state.setTreeFilters)
@@ -76,7 +78,7 @@ export function FamilyTreeControls({
     <div className="flex gap-2">
       {!readOnly && <ShareDialog userId={userId} />}
 
-      <Button onClick={onAutoLayout} variant="outline" size="sm" className="gap-2">
+      <Button onClick={onAutoLayout} variant="outline" size="sm" className="gap-2" disabled={isBusy}>
         <RotateCw className="h-4 w-4" />
         Auto Layout
       </Button>
@@ -393,29 +395,29 @@ export function FamilyTreeControls({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" disabled={isBusy}>
             <FileDown className="h-4 w-4" />
             Export
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onExport}>
+          <DropdownMenuItem onClick={onExport} disabled={isBusy}>
             <ImageIcon className="mr-2 h-4 w-4" />
             Export as Image (PNG)
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportGedcom}>
+          <DropdownMenuItem onClick={onExportGedcom} disabled={isBusy}>
             <FileText className="mr-2 h-4 w-4" />
             Export GEDCOM
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportJson}>
+          <DropdownMenuItem onClick={onExportJson} disabled={isBusy}>
             <FileDown className="mr-2 h-4 w-4" />
             Export JSON Backup
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onImportGedcom}>
+          <DropdownMenuItem onClick={onImportGedcom} disabled={isBusy}>
             <Upload className="mr-2 h-4 w-4" />
             Import GEDCOM
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onImportJson}>
+          <DropdownMenuItem onClick={onImportJson} disabled={isBusy}>
             <Upload className="mr-2 h-4 w-4" />
             Import JSON Backup
           </DropdownMenuItem>

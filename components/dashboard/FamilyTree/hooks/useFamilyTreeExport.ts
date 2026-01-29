@@ -26,7 +26,7 @@ export function useFamilyTreeExport({
 }: UseFamilyTreeExportProps) {
   const supabase = createClient()
 
-  const onExport = useCallback(() => {
+  const onExport = useCallback(async () => {
     if (!rfInstance) return
 
     const nodesBounds = getRectOfNodes(nodes)
@@ -45,7 +45,7 @@ export function useFamilyTreeExport({
       .getPropertyValue('--background')
       .trim() || '#fff'
 
-    toPng(viewport, {
+    const dataUrl = await toPng(viewport, {
       backgroundColor,
       width: nodesBounds.width,
       height: nodesBounds.height,
@@ -54,12 +54,11 @@ export function useFamilyTreeExport({
         height: `${nodesBounds.height}px`,
         transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`,
       },
-    }).then((dataUrl) => {
-      const link = document.createElement('a')
-      link.download = 'glean-family-tree.png'
-      link.href = dataUrl
-      link.click()
     })
+    const link = document.createElement('a')
+    link.download = 'glean-family-tree.png'
+    link.href = dataUrl
+    link.click()
   }, [rfInstance, nodes])
 
   const onExportGedcom = useCallback(() => {

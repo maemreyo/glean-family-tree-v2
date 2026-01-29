@@ -47,10 +47,11 @@ export function FamilyTree({
   readOnly = false 
 }: FamilyTreeProps) {
   // Data fetching
-  const { data: relationshipsData } = useRelationships(userId, {
+  const { data: relationshipsData, isLoading: relationshipsLoading } = useRelationships(userId, {
     enabled: !readOnly,
   })
   const relationships = initialRelationships || relationshipsData || EMPTY_RELATIONSHIPS
+  const isInitialLoading = !readOnly && relationshipsLoading && !initialRelationships && !relationshipsData
 
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
@@ -61,7 +62,15 @@ export function FamilyTree({
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const [actionLoadingLabel, setActionLoadingLabel] = useState<string | null>(null)
   const keywordInputRef = useRef<HTMLInputElement | null>(null)
+  const isActionLoading = actionLoadingLabel !== null
+  const isBusy = isInitialLoading || isActionLoading
+  const canvasLoadingLabel = isActionLoading
+    ? actionLoadingLabel ?? undefined
+    : isInitialLoading
+      ? 'Đang tải cây phả hệ...'
+      : undefined
 
   const relationshipIndex = useMemo(() => {
     const index = new Map<string, { isParent: boolean; isChild: boolean; isSpouse: boolean }>()
@@ -250,6 +259,16 @@ export function FamilyTree({
     setCanRedo(historyRef.current.future.length > 0)
   }, [])
 
+  const runAction = useCallback(async (label: string, action: () => Promise<void> | void) => {
+    setActionLoadingLabel(label)
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    try {
+      await action()
+    } finally {
+      setActionLoadingLabel(null)
+    }
+  }, [])
+
   const isEditableElement = useCallback((element: Element | null) => {
     if (!element) return false
     const tagName = element.tagName.toLowerCase()
@@ -415,18 +434,46 @@ export function FamilyTree({
   )
 
   const handleAutoLayout = useCallback(async () => {
-    const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges)
-    setNodes(newNodes)
-    setEdges(newEdges)
+    await runAction('Đang sắp xếp...', async () => {
+      const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges)
+      setNodes(newNodes)
+      setEdges(newEdges)
 
-    try {
-      await batchSavePositions(newNodes)
-      toast.success('Layout saved')
-    } catch (error) {
-      console.error('Failed to save layout:', error)
-      toast.error('Failed to save layout')
-    }
-  }, [nodes, edges, setNodes, setEdges, batchSavePositions])
+      try {
+        await batchSavePositions(newNodes)
+        toast.success('Layout saved')
+      } catch (error) {
+        console.error('Failed to save layout:', error)
+        toast.error('Failed to save layout')
+      }
+    })
+  }, [nodes, edges, setNodes, setEdges, batchSavePositions, runAction])
+
+  const handleExport = useCallback(async () => {
+    await runAction('Đang xuất PNG...', onExport)
+  }, [onExport, runAction])
+
+  const handleExportGedcom = useCallback(async () => {
+    await runAction('Đang xuất GEDCOM...', onExportGedcom)
+  }, [onExportGedcom, runAction])
+
+  const handleExportJson = useCallback(async () => {
+    await runAction('Đang xuất JSON...', onExportJson)
+  }, [onExportJson, runAction])
+
+  const handleImportGedcomWithLoading = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      await runAction('Đang nhập GEDCOM...', () => handleImportGedcom(event))
+    },
+    [handleImportGedcom, runAction]
+  )
+
+  const handleImportJsonWithLoading = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      await runAction('Đang nhập JSON...', () => handleImportJson(event))
+    },
+    [handleImportJson, runAction]
+  )
 
   const handleDeletePersonFromNode = useCallback(
     async (personId: string) => {
@@ -606,20 +653,23 @@ export function FamilyTree({
         panOnDrag={isSpacePressed ? [1] : false}
         nodesDraggable={!isSpacePressed && !readOnly}
         onMiniMapClick={handleMiniMapClick}
+        isLoading={isInitialLoading || isActionLoading}
+        loadingLabel={canvasLoadingLabel}
       >
         <FamilyTreeControls
           userId={userId}
           readOnly={readOnly}
           onAutoLayout={handleAutoLayout}
-          onExport={onExport}
-          onExportGedcom={onExportGedcom}
-          onExportJson={onExportJson}
+          onExport={handleExport}
+          onExportGedcom={handleExportGedcom}
+          onExportJson={handleExportJson}
           onImportGedcom={triggerImport}
           onImportJson={triggerImportJson}
           onUndo={handleUndo}
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
+          isBusy={isBusy}
         filterOpen={filterOpen}
         onFilterOpenChange={setFilterOpen}
         keywordInputRef={keywordInputRef}
@@ -630,14 +680,14 @@ export function FamilyTree({
       <input
         type="file"
         ref={fileInputRef}
-        onChange={handleImportGedcom}
+        onChange={handleImportGedcomWithLoading}
         className="hidden"
         accept=".ged,.gedcom"
       />
       <input
         type="file"
         ref={jsonFileInputRef}
-        onChange={handleImportJson}
+        onChange={handleImportJsonWithLoading}
         className="hidden"
         accept=".json"
       />

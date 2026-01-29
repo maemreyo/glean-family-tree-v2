@@ -1,9 +1,11 @@
-import type { MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { User, Heart, X } from 'lucide-react'
 
 export function PersonNode({ id, data }: NodeProps) {
+  const [hoverOpen, setHoverOpen] = useState(false)
   const profilePhoto = data.person_photos?.find((p: any) => p.is_profile_picture) || data.person_photos?.[0]
   const hasSpouses = data.spouseCount > 0
   const statusKey =
@@ -17,6 +19,12 @@ export function PersonNode({ id, data }: NodeProps) {
         : genderValue
           ? 'other'
           : 'unknown'
+  const genderLabel =
+    genderKey === 'male' ? 'Male' : genderKey === 'female' ? 'Female' : genderKey === 'other' ? 'Other' : 'Unknown'
+  const statusLabel = statusKey === 'living' ? 'Living' : statusKey === 'deceased' ? 'Deceased' : 'Unknown'
+  const birthLabel = data.date_of_birth
+    ? new Date(data.date_of_birth).toLocaleDateString()
+    : 'Unknown'
 
   const handleDelete = (event: MouseEvent) => {
     event.stopPropagation()
@@ -27,7 +35,13 @@ export function PersonNode({ id, data }: NodeProps) {
   }
   
   return (
-    <div className="relative w-[200px] group">
+    <Popover open={hoverOpen} onOpenChange={setHoverOpen}>
+      <PopoverTrigger asChild>
+        <div
+          className="relative w-[200px] group"
+          onMouseEnter={() => setHoverOpen(true)}
+          onMouseLeave={() => setHoverOpen(false)}
+        >
       {/* Spouse indicator badge */}
       {hasSpouses && (
         <div className="absolute -top-2 -right-2 z-10">
@@ -115,5 +129,41 @@ export function PersonNode({ id, data }: NodeProps) {
         />
       </div>
     </div>
+      </PopoverTrigger>
+      <PopoverContent
+        side="right"
+        align="center"
+        className="w-64"
+        onMouseEnter={() => setHoverOpen(true)}
+        onMouseLeave={() => setHoverOpen(false)}
+      >
+        <div className="flex gap-3">
+          <Avatar className="h-12 w-12 border">
+            <AvatarImage src={profilePhoto?.url} alt={data.label} className="object-cover" />
+            <AvatarFallback className="bg-muted text-muted-foreground">
+              <User className="h-5 w-5" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold truncate">{data.label}</div>
+            <div className="text-xs text-muted-foreground">
+              {statusLabel} · {genderLabel}
+            </div>
+            <div className="mt-2 grid gap-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Born</span>
+                <span className="truncate">{birthLabel}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Spouses</span>
+                <span className="truncate">
+                  {hasSpouses ? data.spouseNames || `${data.spouseCount}` : 'None'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }

@@ -26,7 +26,7 @@ export function FilterPanel({ keywordInputRef }: FilterPanelProps) {
   const resetTreeFilters = useUIStore((state) => state.resetTreeFilters)
 
   return (
-    <div className="flex flex-col h-[500px]">
+    <div className="flex flex-col h-[500px] max-h-[calc(100vh-120px)]">
       <div className="flex items-center justify-between p-4 border-b shrink-0">
         <h3 className="font-semibold text-lg">Filters</h3>
         <Button 

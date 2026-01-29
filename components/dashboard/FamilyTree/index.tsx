@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   Connection,
   addEdge,
   Node,
-  Edge,
   ReactFlowInstance,
   OnNodesChange,
   OnEdgesChange,
@@ -24,13 +23,16 @@ import { useFamilyTreeExport } from './hooks/useFamilyTreeExport'
 import { useFamilyTreeImport } from './hooks/useFamilyTreeImport'
 import { usePositionManagement } from './hooks/usePositionManagement'
 import { useTreeFilters } from './hooks/useTreeFilters'
+import { useFamilyTreeHistory } from './hooks/useFamilyTreeHistory'
+import { useNodeDragging } from './hooks/useNodeDragging'
+import { useFamilyTreeShortcuts } from './hooks/useFamilyTreeShortcuts'
+import { useFamilyTreeContextMenu } from './hooks/useFamilyTreeContextMenu'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
 import { NodeContextMenu } from './NodeContextMenu'
 import { StatsPanel } from './controls/StatsPanel'
-import { getLayoutedElements, updateSharedChildEdges } from './utils/dagre-layout'
+import { getLayoutedElements } from './utils/dagre-layout'
 import { toast } from 'sonner'
-import { getErrorMessage } from '@/lib/utils'
 import 'reactflow/dist/style.css'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
@@ -43,7 +45,6 @@ interface FamilyTreeProps {
 }
 
 const EMPTY_RELATIONSHIPS: Relationship[] = []
-const MAX_HISTORY_SIZE = 50
 
 export function FamilyTree({ 
   userId, 
@@ -60,8 +61,8 @@ export function FamilyTree({
 
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
-  const treeFilters = useUIStore((state) => state.treeFilters)
   const nodeDisplayMode = useUIStore((state) => state.nodeDisplayMode)
+  const moveSpouseTogether = useUIStore((state) => state.moveSpouseTogether)
   
   const layoutOptions = useMemo(() => {
     switch (nodeDisplayMode) {
@@ -80,13 +81,7 @@ export function FamilyTree({
   const { mutateAsync: deletePerson } = useDeletePerson()
   const { mutateAsync: deleteRelationship } = useDeleteRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
-  const [contextMenu, setContextMenu] = useState<{
-    id: string
-    top: number
-    left: number
-  } | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
-  const [isSpacePressed, setIsSpacePressed] = useState(false)
   const [actionLoadingLabel, setActionLoadingLabel] = useState<string | null>(null)
   const keywordInputRef = useRef<HTMLInputElement | null>(null)
   const isActionLoading = actionLoadingLabel !== null
@@ -129,19 +124,43 @@ export function FamilyTree({
     batchSavePositions,
   } = usePositionManagement({ readOnly, userId })
 
-  const historyRef = useRef<{ past: { nodes: Node[]; edges: Edge[] }[]; future: { nodes: Node[]; edges: Edge[] }[] }>({
-    past: [],
-    future: [],
+  const {
+    canUndo,
+    canRedo,
+    pushHistory,
+    handleUndo,
+    handleRedo,
+  } = useFamilyTreeHistory({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    batchSavePositions,
+    treeFilters: filteredPersons, // Use filteredPersons as dependency for resetting history
   })
-  const isApplyingHistoryRef = useRef(false)
-  const layoutInProgressRef = useRef(false)
-  const [canUndo, setCanUndo] = useState(false)
-  const [canRedo, setCanRedo] = useState(false)
 
-  const updateHistoryState = useCallback(() => {
-    setCanUndo(historyRef.current.past.length > 0)
-    setCanRedo(historyRef.current.future.length > 0)
-  }, [])
+  const { onNodeDrag, onNodeDragStop } = useNodeDragging({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    readOnly,
+    moveSpouseTogether,
+    saveNodePosition,
+    saveNodePositionImmediate,
+    batchSavePositions,
+    pushHistory,
+  })
+
+  const { isSpacePressed } = useFamilyTreeShortcuts({
+    handleUndo,
+    handleRedo,
+    setFilterOpen,
+  })
+
+  const { contextMenu, onNodeContextMenu, onPaneClick, closeContextMenu } = useFamilyTreeContextMenu()
+
+  const layoutInProgressRef = useRef(false)
 
   const runAction = useCallback(async (label: string, action: () => Promise<void> | void) => {
     setActionLoadingLabel(label)
@@ -156,252 +175,7 @@ export function FamilyTree({
     }
   }, [])
 
-  const isEditableElement = useCallback((element: Element | null) => {
-    if (!element) return false
-    const tagName = element.tagName.toLowerCase()
-    return (
-      tagName === 'input' ||
-      tagName === 'textarea' ||
-      tagName === 'select' ||
-      (element as HTMLElement).isContentEditable
-    )
-  }, [])
-
-  const createSnapshot = useCallback(() => {
-    return {
-      nodes: structuredClone(nodes),
-      edges: structuredClone(edges),
-    }
-  }, [nodes, edges])
-
-  const pushHistory = useCallback(() => {
-    if (isApplyingHistoryRef.current) return
-    historyRef.current.past.push(createSnapshot())
-    historyRef.current.future = []
-    if (historyRef.current.past.length > MAX_HISTORY_SIZE) {
-      historyRef.current.past.shift()
-    }
-    updateHistoryState()
-  }, [createSnapshot, updateHistoryState])
-
-  const handleUndo = useCallback(async () => {
-    if (historyRef.current.past.length === 0) return
-    const currentSnapshot = createSnapshot()
-    const previousSnapshot = historyRef.current.past.pop()
-    if (!previousSnapshot) return
-    historyRef.current.future.push(currentSnapshot)
-    isApplyingHistoryRef.current = true
-    setNodes(previousSnapshot.nodes)
-    setEdges(previousSnapshot.edges)
-    updateHistoryState()
-
-    try {
-      await batchSavePositions(previousSnapshot.nodes)
-    } catch (error) {
-      console.error('Failed to save undo state:', error)
-      toast.error('Failed to save undo state')
-    }
-  }, [createSnapshot, setEdges, setNodes, updateHistoryState, batchSavePositions])
-
-  const handleRedo = useCallback(async () => {
-    if (historyRef.current.future.length === 0) return
-    const currentSnapshot = createSnapshot()
-    const nextSnapshot = historyRef.current.future.pop()
-    if (!nextSnapshot) return
-    historyRef.current.past.push(currentSnapshot)
-    isApplyingHistoryRef.current = true
-    setNodes(nextSnapshot.nodes)
-    setEdges(nextSnapshot.edges)
-    updateHistoryState()
-
-    try {
-      await batchSavePositions(nextSnapshot.nodes)
-    } catch (error) {
-      console.error('Failed to save redo state:', error)
-      toast.error('Failed to save redo state')
-    }
-  }, [createSnapshot, setEdges, setNodes, updateHistoryState, batchSavePositions])
-
-  useEffect(() => {
-    if (isApplyingHistoryRef.current) {
-      isApplyingHistoryRef.current = false
-    }
-  }, [nodes, edges])
-
-  useEffect(() => {
-    historyRef.current.past = []
-    historyRef.current.future = []
-    updateHistoryState()
-  }, [treeFilters, updateHistoryState])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase()
-      const isMod = event.ctrlKey || event.metaKey
-      const isEditable = isEditableElement(document.activeElement)
-
-      if (key === ' ' && !isEditable) {
-        event.preventDefault()
-        if (!isSpacePressed) {
-          setIsSpacePressed(true)
-        }
-        return
-      }
-
-      if (!isMod) return
-      if (isEditable && key !== 'f') return
-
-      if (key === 'z') {
-        event.preventDefault()
-        if (event.shiftKey) {
-          handleRedo()
-        } else {
-          handleUndo()
-        }
-      }
-
-      if (key === 'f') {
-        event.preventDefault()
-        setFilterOpen(true)
-      }
-    }
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === ' ') {
-        setIsSpacePressed(false)
-      }
-    }
-
-    const handleBlur = () => {
-      setIsSpacePressed(false)
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    window.addEventListener('blur', handleBlur)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-      window.removeEventListener('blur', handleBlur)
-    }
-  }, [handleRedo, handleUndo, isEditableElement, isSpacePressed])
-
   // Handlers
-  const refreshSharedChildEdges = useCallback(
-    (movedNode: Node) => {
-      const updatedNodes = nodes.map((node) =>
-        node.id === movedNode.id ? { ...node, position: movedNode.position } : node
-      )
-      setEdges((currentEdges) => updateSharedChildEdges(updatedNodes, currentEdges))
-    },
-    [nodes, setEdges]
-  )
-
-  const dragNodeIdRef = useRef<string | null>(null)
-  const lastDragPosRef = useRef<Map<string, { x: number; y: number }>>(new Map())
-  const moveSpouseTogether = useUIStore((state) => state.moveSpouseTogether)
-  const getSpouseGroup = useCallback(
-    (id: string) => {
-      const group = new Set<string>([id])
-      edges.forEach((edge) => {
-        if (edge.data?.relationshipType === 'spouse') {
-          if (edge.source === id) group.add(edge.target)
-          if (edge.target === id) group.add(edge.source)
-        }
-      })
-      return Array.from(group)
-    },
-    [edges]
-  )
-
-  const onNodeDrag = useCallback(
-    (event: any, node: Node) => {
-      if (readOnly) return
-      if (dragNodeIdRef.current !== node.id) {
-        pushHistory()
-        dragNodeIdRef.current = node.id
-      }
-      const last = lastDragPosRef.current.get(node.id)
-      const dx = last ? node.position.x - last.x : 0
-      const dy = last ? node.position.y - last.y : 0
-      lastDragPosRef.current.set(node.id, { x: node.position.x, y: node.position.y })
-
-      const isGroup = moveSpouseTogether || !!(event?.shiftKey || event?.altKey)
-      if (isGroup && (dx !== 0 || dy !== 0)) {
-        const groupIds = new Set(getSpouseGroup(node.id))
-        setNodes((prev) => {
-          const next = prev.map((n) => {
-            if (n.id === node.id) {
-              return { ...n, position: node.position }
-            }
-            if (groupIds.has(n.id)) {
-              return {
-                ...n,
-                position: { x: n.position.x + dx, y: n.position.y + dy },
-              }
-            }
-            return n
-          })
-          setEdges((curr) => updateSharedChildEdges(next, curr))
-          return next
-        })
-        saveNodePosition(node.id, node.position.x, node.position.y)
-      } else {
-        saveNodePosition(node.id, node.position.x, node.position.y)
-        refreshSharedChildEdges(node)
-      }
-    },
-    [pushHistory, readOnly, refreshSharedChildEdges, saveNodePosition, moveSpouseTogether, setNodes, setEdges, getSpouseGroup]
-  )
-
-  const onNodeDragStop = useCallback(
-    async (event: any, node: Node) => {
-      if (readOnly) return
-      const isGroup = moveSpouseTogether || !!(event?.shiftKey || event?.altKey)
-      try {
-        if (isGroup) {
-          const groupIds = new Set(getSpouseGroup(node.id))
-          const toSave = nodes.filter((n) => groupIds.has(n.id))
-          await batchSavePositions(toSave)
-        } else {
-          saveNodePositionImmediate(node.id, node.position.x, node.position.y)
-        }
-      } catch (error) {
-        toast.error(getErrorMessage(error))
-      }
-      refreshSharedChildEdges(node)
-      dragNodeIdRef.current = null
-      lastDragPosRef.current.delete(node.id)
-    },
-    [batchSavePositions, nodes, readOnly, refreshSharedChildEdges, moveSpouseTogether, saveNodePositionImmediate, getSpouseGroup]
-  )
-
-  const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      event.preventDefault()
-      
-      const pane = (event.target as Element).closest('.react-flow')
-      if (pane) {
-        const rect = pane.getBoundingClientRect()
-        setContextMenu({
-          id: node.id,
-          top: event.clientY - rect.top,
-          left: event.clientX - rect.left,
-        })
-      } else {
-        setContextMenu({
-          id: node.id,
-          top: event.clientY,
-          left: event.clientX,
-        })
-      }
-    },
-    []
-  )
-
-  const onPaneClick = useCallback(() => setContextMenu(null), [])
-
   const handleMiniMapClick = useCallback(
     (_: React.MouseEvent, position: { x: number; y: number }) => {
       if (!rfInstance) return
@@ -683,7 +457,7 @@ export function FamilyTree({
               left={contextMenu.left}
               onEdit={openPersonModal}
               onDelete={handleDeletePersonFromNode}
-              onClose={() => setContextMenu(null)}
+              onClose={closeContextMenu}
             />
           )
         }

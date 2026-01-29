@@ -9,6 +9,7 @@ export function PersonNode({ id, data }: NodeProps) {
   const [hoverOpen, setHoverOpen] = useState(false)
   const nodeDisplayMode = useUIStore((state) => state.nodeDisplayMode)
   const isNodeDragging = useUIStore((state) => state.isNodeDragging)
+  const isContextMenuOpen = useUIStore((state) => state.isContextMenuOpen)
   
   const profilePhoto = data.person_photos?.find((p: any) => p.is_profile_picture) || data.person_photos?.[0]
   const hasSpouses = data.spouseCount > 0
@@ -192,8 +193,8 @@ export function PersonNode({ id, data }: NodeProps) {
 
   const isPortraitOrCompact = nodeDisplayMode === 'portrait' || nodeDisplayMode === 'compact'
   
-  // Don't show popover if dragging
-  const showHover = hoverOpen && !isNodeDragging
+  // Don't show popover if dragging or context menu is open
+  const showHover = hoverOpen && !isNodeDragging && !isContextMenuOpen
 
   return (
     <Popover open={showHover} onOpenChange={setHoverOpen}>

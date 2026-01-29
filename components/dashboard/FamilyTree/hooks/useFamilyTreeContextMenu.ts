@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Node } from 'reactflow'
+import { useUIStore } from '@/providers/ui-store-provider'
 
 export function useFamilyTreeContextMenu() {
   const [contextMenu, setContextMenu] = useState<{
@@ -7,6 +8,13 @@ export function useFamilyTreeContextMenu() {
     top: number
     left: number
   } | null>(null)
+  
+  const setIsContextMenuOpen = useUIStore((state) => state.setIsContextMenuOpen)
+  
+  // Sync state with global store
+  useEffect(() => {
+    setIsContextMenuOpen(!!contextMenu)
+  }, [contextMenu, setIsContextMenuOpen])
 
   const onNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {

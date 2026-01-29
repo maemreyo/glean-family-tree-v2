@@ -138,7 +138,7 @@ export function FamilyTree({
     batchSavePositions,
   })
 
-  const { onNodeDrag, onNodeDragStop } = useNodeDragging({
+  const { onNodeDrag, onNodeDragStart, onNodeDragStop } = useNodeDragging({
     nodes,
     edges,
     setNodes,
@@ -438,6 +438,7 @@ export function FamilyTree({
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onNodeDrag={onNodeDrag}
+        onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         onInit={setRfInstance}
         panOnDrag={true}

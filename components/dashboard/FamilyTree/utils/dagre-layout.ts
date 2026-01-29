@@ -11,6 +11,7 @@ interface LayoutOptions {
   nodeHeight?: number
 }
 
+// Legacy helper for adjacency (used in syncSpouseData)
 function findSpouseGroups(edges: Edge[]): Map<string, string[]> {
   const spouseMap = new Map<string, string[]>()
   
@@ -36,73 +37,51 @@ function findSpouseGroups(edges: Edge[]): Map<string, string[]> {
   return spouseMap
 }
 
-function positionSpousesHorizontally(
-  nodes: Node[],
-  spouseMap: Map<string, string[]>,
-  basePositions: Map<string, { x: number; y: number }>,
-  options: LayoutOptions
-): Node[] {
-  const { nodeWidth = DEFAULT_NODE_WIDTH } = options
-  const positioned = new Set<string>()
-  const newNodes = [...nodes]
-  
-  // Process each person who has spouses
-  spouseMap.forEach((spouses, personId) => {
-    if (positioned.has(personId)) return
+// New helper for clustering connected components of spouses
+function getSpouseClusters(nodes: Node[], edges: Edge[]): Map<string, string[]> {
+  const clusters = new Map<string, string[]>()
+  const visited = new Set<string>()
+  const adj = new Map<string, string[]>()
+
+  // Build adjacency list for spouse edges
+  edges.forEach(edge => {
+    if (edge.data?.relationshipType === 'spouse') {
+      if (!adj.has(edge.source)) adj.set(edge.source, [])
+      if (!adj.has(edge.target)) adj.set(edge.target, [])
+      adj.get(edge.source)!.push(edge.target)
+      adj.get(edge.target)!.push(edge.source)
+    }
+  })
+
+  // Find connected components
+  nodes.forEach(node => {
+    if (visited.has(node.id)) return
     
-    const basePos = basePositions.get(personId)
-    if (!basePos) return
+    const clusterNodes: string[] = []
+    const queue = [node.id]
+    visited.add(node.id)
     
-    // For multiple spouses, arrange them horizontally
-    // Calculate total width of the group
-    // We consider the group as [Main Person] + [Spouse 1] + [Spouse 2] ...
-    // Wait, typically it's pairs. But if multiple spouses, we group them.
-    // Let's assume the main person is the "anchor" from dagre layout.
-    
-    // Simple strategy: Keep the main person at basePos, place spouses to the right.
-    // Or center the group around basePos?
-    // Let's stick to "Main person at calculated position, spouses to the right" for simplicity unless it overlaps.
-    // But if we center the group, it looks better.
-    
-    // Let's gather the whole group (person + spouses)
-    const group = [personId, ...spouses]
-    // Filter out those already positioned to avoid double moving (though spouses check should handle it)
-    // Actually, we should only position if we encounter the "left-most" or "primary" one?
-    // But dagre gives positions for everyone.
-    
-    // Let's trust dagre for vertical rank, but override horizontal.
-    // We need to pick one "anchor" node to define the group's center.
-    // Usually dagre places connected nodes close.
-    
-    // Let's use the logic from the previous attempt: Center the group.
-    
-    const groupSize = group.length
-    const totalGroupWidth = groupSize * nodeWidth + (groupSize - 1) * SPOUSE_GAP
-    
-    // Use the position of the personId as the center reference? 
-    // Or average of all group members?
-    // Let's use personId's position as the center of the group for now.
-    
-    const startX = basePos.x - totalGroupWidth / 2 + nodeWidth / 2
-    
-    group.forEach((memberId, index) => {
-      if (positioned.has(memberId)) return
+    while (queue.length > 0) {
+      const curr = queue.shift()!
+      clusterNodes.push(curr)
       
-      const memberIndex = newNodes.findIndex(n => n.id === memberId)
-      if (memberIndex >= 0) {
-        newNodes[memberIndex] = {
-          ...newNodes[memberIndex],
-          position: {
-            x: startX + index * (nodeWidth + SPOUSE_GAP),
-            y: basePos.y
-          }
+      const neighbors = adj.get(curr) || []
+      neighbors.forEach(neighbor => {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor)
+          queue.push(neighbor)
         }
-        positioned.add(memberId)
-      }
-    })
+      })
+    }
+    
+    // Sort by ID to ensure deterministic order within cluster
+    clusterNodes.sort()
+    
+    // Use first node as Representative
+    clusters.set(clusterNodes[0], clusterNodes)
   })
   
-  return newNodes
+  return clusters
 }
 
 export function syncSpouseData(nodes: Node[], edges: Edge[], options: LayoutOptions = {}) {
@@ -160,16 +139,9 @@ export function syncSpouseData(nodes: Node[], edges: Edge[], options: LayoutOpti
       return edge
     }
 
-    const hasStoredHandles = !!edge.sourceHandle || !!edge.targetHandle
-    if (hasStoredHandles) {
-      return {
-        ...edge,
-        sourceHandle: edge.sourceHandle ?? 'spouse-right',
-        targetHandle: edge.targetHandle ?? 'spouse-left',
-        type: 'spouse',
-      }
-    }
-
+    // Always recalculate spouse handles to ensure Inner-to-Inner connection
+    // ignoring stored handles which might be stale after layout swap
+    
     const sourceNode = nodesWithSpouseData.find(n => n.id === edge.source)
     const targetNode = nodesWithSpouseData.find(n => n.id === edge.target)
 
@@ -240,62 +212,142 @@ export function getLayoutedElements(nodes: Node[], edges: Edge[], options: Layou
     edgesep: 50,
   })
 
-  // Find spouse relationships
-  const spouseMap = findSpouseGroups(edges)
-
-  // Add spouse count to node data for initial layout considerations if needed
-  // (Though dagre doesn't know about our internal data, we just pass nodes)
-  
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight })
+  // 1. Get Clusters
+  const clusters = getSpouseClusters(nodes, edges)
+  const nodeToRep = new Map<string, string>()
+  clusters.forEach((members, repId) => {
+    members.forEach(m => nodeToRep.set(m, repId))
   })
 
-  // Add parent-child edges (exclude spouse edges from hierarchy to avoid cycles or weird levels)
-  // Spouse edges should be on the same rank.
+  // 2. Add Reps to Dagre with compound width
+  clusters.forEach((members, repId) => {
+    const width = members.length * nodeWidth + (members.length - 1) * SPOUSE_GAP
+    dagreGraph.setNode(repId, { width, height: nodeHeight })
+  })
+
+  // 3. Add Edges (mapped to Reps)
+  // We only add edges between different clusters
+  const addedEdges = new Set<string>()
+  
   edges.forEach((edge) => {
     const isSpouse = edge.data?.relationshipType === 'spouse'
     if (!isSpouse) {
-      dagreGraph.setEdge(edge.source, edge.target)
+      const sourceRep = nodeToRep.get(edge.source)
+      const targetRep = nodeToRep.get(edge.target)
+      
+      if (sourceRep && targetRep && sourceRep !== targetRep) {
+        // Avoid duplicate edges between same clusters to keep graph clean
+        const edgeKey = `${sourceRep}-${targetRep}`
+        if (!addedEdges.has(edgeKey)) {
+          dagreGraph.setEdge(sourceRep, targetRep)
+          addedEdges.add(edgeKey)
+        }
+      }
     }
   })
 
   dagre.layout(dagreGraph)
 
-  // Get base positions from dagre
-  const basePositions = new Map<string, { x: number; y: number }>()
-  nodes.forEach((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id)
-    if (nodeWithPosition) {
-      basePositions.set(node.id, {
-        x: nodeWithPosition.x,
-        y: nodeWithPosition.y
-      })
-    }
-  })
-
-  // Initial positioning based on Dagre
-  let positionedNodes = nodes.map((node) => {
-    const pos = basePositions.get(node.id)
-    // Fallback if dagre didn't position it (e.g. disconnected)
-    if (!pos) return node
-    
-    return {
-      ...node,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      position: {
-        x: pos.x - nodeWidth / 2,
-        y: pos.y - nodeHeight / 2,
-      },
-      width: nodeWidth,
-      height: nodeHeight,
-    }
-  })
+  // 4. Distribute Positions
+  const positionedNodes: Node[] = []
   
-  // Adjust positions to place spouses horizontally next to each other
-  positionedNodes = positionSpousesHorizontally(positionedNodes, spouseMap, basePositions, options)
+  clusters.forEach((members, repId) => {
+    const dagreNode = dagreGraph.node(repId)
+    // If dagre didn't position it (disconnected node?), we should have a fallback.
+    // But dagre handles disconnected nodes too.
+    
+    if (dagreNode) {
+      // SMART SORTING: Sort members based on average X of neighbors
+      const memberScores = members.map(memberId => {
+        let totalX = 0
+        let count = 0
+        
+        // Find connected nodes
+        edges.forEach(edge => {
+          if (edge.data?.relationshipType === 'spouse') return // Ignore spouse edges for sorting
+          
+          let otherId: string | null = null
+          if (edge.source === memberId) otherId = edge.target
+          else if (edge.target === memberId) otherId = edge.source
+          
+          if (otherId) {
+             // Find representative of other node
+             const otherRep = nodeToRep.get(otherId)
+             if (otherRep && otherRep !== repId) {
+                const otherPos = dagreGraph.node(otherRep)
+                if (otherPos) {
+                   totalX += otherPos.x
+                   count++
+                }
+             }
+          }
+        })
+        
+        return { 
+          id: memberId, 
+          score: count > 0 ? totalX / count : 0,
+          hasConnections: count > 0
+        }
+      })
+      
+      // Sort: Nodes with connections to left go left.
+      // If no connections, fallback to ID sort (already sorted by getSpouseClusters).
+      // We only sort if at least one has connections.
+      if (memberScores.some(m => m.hasConnections)) {
+         memberScores.sort((a, b) => {
+            if (a.hasConnections && !b.hasConnections) return -1 // Connected go left? Or keep default? 
+            // Actually, if a has connections (avgX), it should be placed near avgX.
+            // But we are placing them in a horizontal row centered at dagreNode.x.
+            // Lower avgX -> Left. Higher avgX -> Right.
+            // If b has no connections, where to put? Maybe neutral (0)?
+            // Better: Treat no connections as "neutral" or keep relative order.
+            
+            if (a.hasConnections && b.hasConnections) {
+                return a.score - b.score
+            }
+            // If one has connections and other doesn't...
+            // Maybe just put connected ones on the side of their connections?
+            // Simple: just sort by score, defaulting 0. 
+            // But 0 is "Left". If AvgX is 500, 0 is very left.
+            // We should use dagreNode.x as "neutral" score?
+            const aScore = a.hasConnections ? a.score : dagreNode.x
+            const bScore = b.hasConnections ? b.score : dagreNode.x
+            return aScore - bScore
+         })
+         
+         // Re-order members array based on sort
+         members = memberScores.map(m => m.id)
+      }
 
-  // Sync spouse data (update handles and node data) and return
-  // This step ensures the edges point to the correct handles based on the final positions
+      const totalWidth = members.length * nodeWidth + (members.length - 1) * SPOUSE_GAP
+      const startX = dagreNode.x - totalWidth / 2
+      const startY = dagreNode.y - nodeHeight / 2
+
+      members.forEach((memberId, index) => {
+        const originalNode = nodes.find(n => n.id === memberId)
+        if (!originalNode) return
+
+        positionedNodes.push({
+          ...originalNode,
+          targetPosition: isHorizontal ? Position.Left : Position.Top,
+          sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+          position: {
+            x: startX + index * (nodeWidth + SPOUSE_GAP),
+            y: startY
+          },
+          width: nodeWidth,
+          height: nodeHeight,
+        })
+      })
+    } else {
+        // Fallback for nodes that somehow missed layout (should not happen)
+        members.forEach(memberId => {
+             const originalNode = nodes.find(n => n.id === memberId)
+             if(originalNode) positionedNodes.push(originalNode)
+        })
+    }
+  })
+
+  // 5. Sync Spouse Data (Handles)
   return syncSpouseData(positionedNodes, edges, options)
 }

@@ -39,6 +39,7 @@ interface FamilyTreeCanvasProps {
   onConnect: (connection: Connection) => void
   onNodeClick: (event: React.MouseEvent, node: Node) => void
   onNodeDrag?: NodeDragHandler
+  onNodeDragStart?: NodeDragHandler
   onNodeDragStop: NodeDragHandler
   onInit: (instance: ReactFlowInstance) => void
   panOnDrag?: boolean | number[]
@@ -61,6 +62,7 @@ export function FamilyTreeCanvas({
   onConnect,
   onNodeClick,
   onNodeDrag,
+  onNodeDragStart,
   onNodeDragStop,
   onInit,
   panOnDrag,

@@ -3,6 +3,7 @@ import { Node, Edge } from 'reactflow'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/utils'
 import { updateSharedChildEdges } from '../utils/dagre-layout'
+import { useUIStore } from '@/providers/ui-store-provider'
 
 interface UseNodeDraggingProps {
   nodes: Node[]
@@ -31,6 +32,7 @@ export function useNodeDragging({
 }: UseNodeDraggingProps) {
   const dragNodeIdRef = useRef<string | null>(null)
   const lastDragPosRef = useRef<Map<string, { x: number; y: number }>>(new Map())
+  const setIsNodeDragging = useUIStore((state) => state.setIsNodeDragging)
 
   const getSpouseGroup = useCallback(
     (id: string) => {
@@ -56,12 +58,17 @@ export function useNodeDragging({
     [nodes, setEdges]
   )
 
+  const onNodeDragStart = useCallback(() => {
+    setIsNodeDragging(true)
+  }, [setIsNodeDragging])
+
   const onNodeDrag = useCallback(
     (event: any, node: Node) => {
       if (readOnly) return
       if (dragNodeIdRef.current !== node.id) {
         pushHistory()
         dragNodeIdRef.current = node.id
+        setIsNodeDragging(true)
       }
       const last = lastDragPosRef.current.get(node.id)
       const dx = last ? node.position.x - last.x : 0
@@ -102,11 +109,13 @@ export function useNodeDragging({
       setNodes,
       setEdges,
       getSpouseGroup,
+      setIsNodeDragging,
     ]
   )
 
   const onNodeDragStop = useCallback(
     async (event: any, node: Node) => {
+      setIsNodeDragging(false)
       if (readOnly) return
       const isGroup = moveSpouseTogether || !!(event?.shiftKey || event?.altKey)
       try {
@@ -132,10 +141,12 @@ export function useNodeDragging({
       moveSpouseTogether,
       saveNodePositionImmediate,
       getSpouseGroup,
+      setIsNodeDragging,
     ]
   )
 
   return {
+    onNodeDragStart,
     onNodeDrag,
     onNodeDragStop,
   }

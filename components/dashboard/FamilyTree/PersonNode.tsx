@@ -8,6 +8,7 @@ import { useUIStore } from '@/providers/ui-store-provider'
 export function PersonNode({ id, data }: NodeProps) {
   const [hoverOpen, setHoverOpen] = useState(false)
   const nodeDisplayMode = useUIStore((state) => state.nodeDisplayMode)
+  const isNodeDragging = useUIStore((state) => state.isNodeDragging)
   
   const profilePhoto = data.person_photos?.find((p: any) => p.is_profile_picture) || data.person_photos?.[0]
   const hasSpouses = data.spouseCount > 0
@@ -191,8 +192,11 @@ export function PersonNode({ id, data }: NodeProps) {
 
   const isPortraitOrCompact = nodeDisplayMode === 'portrait' || nodeDisplayMode === 'compact'
   
+  // Don't show popover if dragging
+  const showHover = hoverOpen && !isNodeDragging
+
   return (
-    <Popover open={hoverOpen} onOpenChange={setHoverOpen}>
+    <Popover open={showHover} onOpenChange={setHoverOpen}>
       <PopoverTrigger asChild>
         <div
           className={`relative group transition-all duration-300 ${nodeDisplayMode === 'portrait' ? 'w-[180px]' : nodeDisplayMode === 'compact' ? 'w-[140px]' : nodeDisplayMode === 'detailed' ? 'w-[240px]' : 'w-[200px]'}`}

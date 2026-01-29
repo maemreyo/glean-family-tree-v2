@@ -48,6 +48,8 @@ export type UIStore = {
   closePersonModal: () => void
 
   // Family tree view state
+  isNodeDragging: boolean
+  setIsNodeDragging: (isDragging: boolean) => void
   treeZoom: number
   setTreeZoom: (zoom: number) => void
   treePosition: { x: number; y: number }
@@ -128,6 +130,8 @@ export const createUIStore = () => {
     closePersonModal: () => set({ selectedPersonId: null }),
 
     // Tree view
+    isNodeDragging: false,
+    setIsNodeDragging: (isDragging) => set({ isNodeDragging: isDragging }),
     treeZoom: DEFAULT_ZOOM,
     setTreeZoom: (zoom) => set({ treeZoom: Math.max(0.1, Math.min(3, zoom)) }),
     treePosition: DEFAULT_TREE_POSITION,

@@ -13,6 +13,7 @@ import {
   Layout,
   List,
   Maximize2,
+  Link2,
 } from 'lucide-react'
 import {
   Select,
@@ -81,6 +82,8 @@ export function FamilyTreeControls({
   const toggleStatsPanel = useUIStore((state) => state.toggleStatsPanel)
   const nodeDisplayMode = useUIStore((state) => state.nodeDisplayMode)
   const setNodeDisplayMode = useUIStore((state) => state.setNodeDisplayMode)
+  const moveSpouseTogether = useUIStore((state) => state.moveSpouseTogether)
+  const toggleMoveSpouseTogether = useUIStore((state) => state.toggleMoveSpouseTogether)
 
   useEffect(() => {
     if (!filterOpen) return
@@ -141,6 +144,17 @@ export function FamilyTreeControls({
 
         <Button onClick={onAutoLayout} variant="ghost" size="icon" title="Auto Layout" disabled={isBusy} className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
           <RotateCw className="h-4 w-4" />
+        </Button>
+
+        <Button
+          onClick={toggleMoveSpouseTogether}
+          variant={moveSpouseTogether ? 'secondary' : 'ghost'}
+          size="icon"
+          title="Move spouses together (Shift/Alt)"
+          disabled={readOnly}
+          className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+        >
+          <Link2 className="h-4 w-4" />
         </Button>
 
         <PrintDialog />

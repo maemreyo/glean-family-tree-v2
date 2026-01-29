@@ -30,6 +30,7 @@ import { NodeContextMenu } from './NodeContextMenu'
 import { StatsPanel } from './controls/StatsPanel'
 import { getLayoutedElements, updateSharedChildEdges } from './utils/dagre-layout'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/utils'
 import 'reactflow/dist/style.css'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
@@ -124,6 +125,7 @@ export function FamilyTree({
 
   const {
     saveNodePosition,
+    saveNodePositionImmediate,
     batchSavePositions,
   } = usePositionManagement({ readOnly, userId })
 
@@ -283,28 +285,82 @@ export function FamilyTree({
   )
 
   const dragNodeIdRef = useRef<string | null>(null)
+  const lastDragPosRef = useRef<Map<string, { x: number; y: number }>>(new Map())
+  const moveSpouseTogether = useUIStore((state) => state.moveSpouseTogether)
+  const getSpouseGroup = useCallback(
+    (id: string) => {
+      const group = new Set<string>([id])
+      edges.forEach((edge) => {
+        if (edge.data?.relationshipType === 'spouse') {
+          if (edge.source === id) group.add(edge.target)
+          if (edge.target === id) group.add(edge.source)
+        }
+      })
+      return Array.from(group)
+    },
+    [edges]
+  )
 
   const onNodeDrag = useCallback(
-    (_: any, node: Node) => {
+    (event: any, node: Node) => {
       if (readOnly) return
       if (dragNodeIdRef.current !== node.id) {
         pushHistory()
         dragNodeIdRef.current = node.id
       }
-      saveNodePosition(node.id, node.position.x, node.position.y)
-      refreshSharedChildEdges(node)
+      const last = lastDragPosRef.current.get(node.id)
+      const dx = last ? node.position.x - last.x : 0
+      const dy = last ? node.position.y - last.y : 0
+      lastDragPosRef.current.set(node.id, { x: node.position.x, y: node.position.y })
+
+      const isGroup = moveSpouseTogether || !!(event?.shiftKey || event?.altKey)
+      if (isGroup && (dx !== 0 || dy !== 0)) {
+        const groupIds = new Set(getSpouseGroup(node.id))
+        setNodes((prev) => {
+          const next = prev.map((n) => {
+            if (n.id === node.id) {
+              return { ...n, position: node.position }
+            }
+            if (groupIds.has(n.id)) {
+              return {
+                ...n,
+                position: { x: n.position.x + dx, y: n.position.y + dy },
+              }
+            }
+            return n
+          })
+          setEdges((curr) => updateSharedChildEdges(next, curr))
+          return next
+        })
+        saveNodePosition(node.id, node.position.x, node.position.y)
+      } else {
+        saveNodePosition(node.id, node.position.x, node.position.y)
+        refreshSharedChildEdges(node)
+      }
     },
-    [pushHistory, readOnly, refreshSharedChildEdges, saveNodePosition]
+    [pushHistory, readOnly, refreshSharedChildEdges, saveNodePosition, moveSpouseTogether, setNodes, setEdges, getSpouseGroup]
   )
 
   const onNodeDragStop = useCallback(
-    (_: any, node: Node) => {
+    async (event: any, node: Node) => {
       if (readOnly) return
-      saveNodePosition(node.id, node.position.x, node.position.y)
+      const isGroup = moveSpouseTogether || !!(event?.shiftKey || event?.altKey)
+      try {
+        if (isGroup) {
+          const groupIds = new Set(getSpouseGroup(node.id))
+          const toSave = nodes.filter((n) => groupIds.has(n.id))
+          await batchSavePositions(toSave)
+        } else {
+          saveNodePositionImmediate(node.id, node.position.x, node.position.y)
+        }
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+      }
       refreshSharedChildEdges(node)
       dragNodeIdRef.current = null
+      lastDragPosRef.current.delete(node.id)
     },
-    [saveNodePosition, readOnly, refreshSharedChildEdges]
+    [batchSavePositions, nodes, readOnly, refreshSharedChildEdges, moveSpouseTogether, saveNodePositionImmediate, getSpouseGroup]
   )
 
   const onNodeContextMenu = useCallback(
@@ -378,6 +434,7 @@ export function FamilyTree({
     layoutInProgressRef.current = true
     try {
       await runAction('Arranging...', async () => {
+        pushHistory()
         const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges, layoutOptions)
         setNodes(newNodes)
         setEdges(newEdges)
@@ -393,7 +450,7 @@ export function FamilyTree({
     } finally {
       layoutInProgressRef.current = false
     }
-  }, [nodes, edges, setNodes, setEdges, batchSavePositions, runAction, layoutOptions])
+  }, [nodes, edges, setNodes, setEdges, batchSavePositions, runAction, layoutOptions, pushHistory])
 
   const handleExport = useCallback(async () => {
     await runAction('Exporting PNG...', onExport)

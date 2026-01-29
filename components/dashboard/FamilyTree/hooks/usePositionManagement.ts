@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react'
 import { Node } from 'reactflow'
 import { useUpdatePerson } from '@/lib/supabase/queries'
 import { createClient } from '@/lib/supabase/client'
+import { getErrorMessage } from '@/lib/utils'
 
 interface UsePositionManagementProps {
   readOnly?: boolean
@@ -38,29 +39,30 @@ export function usePositionManagement({ readOnly = false, userId }: UsePositionM
     async (nodes: Node[]) => {
       if (readOnly) return
 
-      const updates = nodes.map(node => ({
-        id: node.id,
-        user_id: userId,
-        position_x: node.position.x,
-        position_y: node.position.y,
-        updated_at: new Date().toISOString(),
-      }))
-
       try {
-        const { error } = await supabase
-          .from('persons')
-          .upsert(updates, { 
-            onConflict: 'id',
-            ignoreDuplicates: false 
-          })
+        const updatedAt = new Date().toISOString()
+        await Promise.all(
+          nodes.map(async (node) => {
+            const { error } = await supabase
+              .from('persons')
+              .update({
+                position_x: node.position.x,
+                position_y: node.position.y,
+                updated_at: updatedAt,
+              })
+              .eq('id', node.id)
+              .eq('user_id', userId)
 
-        if (error) throw error
+            if (error) throw error
+          })
+        )
       } catch (error) {
-        console.error('Failed to batch save positions:', error)
-        throw error
+        const message = getErrorMessage(error)
+        console.error('Failed to batch save positions:', message)
+        throw new Error(message)
       }
     },
-    [supabase, readOnly]
+    [supabase, readOnly, userId]
   )
 
   // Immediate save (for critical operations)

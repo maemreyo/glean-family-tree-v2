@@ -57,6 +57,8 @@ export type UIStore = {
   setNodeDisplayMode: (mode: string) => void
   showStatsPanel: boolean
   toggleStatsPanel: () => void
+  moveSpouseTogether: boolean
+  toggleMoveSpouseTogether: () => void
   treeFilters: TreeFilters
   setTreeFilters: (updater: (current: TreeFilters) => TreeFilters) => void
   resetTreeFilters: () => void
@@ -140,6 +142,9 @@ export const createUIStore = () => {
     showStatsPanel: false,
     toggleStatsPanel: () =>
       set((state) => ({ showStatsPanel: !state.showStatsPanel })),
+    moveSpouseTogether: false,
+    toggleMoveSpouseTogether: () =>
+      set((state) => ({ moveSpouseTogether: !state.moveSpouseTogether })),
     treeFilters: DEFAULT_TREE_FILTERS,
     setTreeFilters: (updater) =>
       set((state) => ({

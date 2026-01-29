@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, useEffect } from 'react'
 import { Node, Edge } from 'reactflow'
 import { toast } from 'sonner'
 import { PersonWithPhoto } from '@/types/app'
+import { useUIStore } from '@/providers/ui-store-provider'
 
 const MAX_HISTORY_SIZE = 50
 
@@ -11,7 +12,6 @@ interface UseFamilyTreeHistoryProps {
   setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void
   setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void
   batchSavePositions: (nodes: Node[]) => Promise<void>
-  treeFilters?: PersonWithPhoto[] // To reset history when filters change
 }
 
 export function useFamilyTreeHistory({
@@ -20,7 +20,6 @@ export function useFamilyTreeHistory({
   setNodes,
   setEdges,
   batchSavePositions,
-  treeFilters,
 }: UseFamilyTreeHistoryProps) {
   const historyRef = useRef<{ past: { nodes: Node[]; edges: Edge[] }[]; future: { nodes: Node[]; edges: Edge[] }[] }>({
     past: [],
@@ -90,12 +89,13 @@ export function useFamilyTreeHistory({
     }
   }, [createSnapshot, setEdges, setNodes, updateHistoryState, batchSavePositions])
 
-  // Reset history when filters change
+  // Reset history when filters change (using store directly to avoid dependency on filtered data)
+  const treeFiltersState = useUIStore((state) => state.treeFilters)
   useEffect(() => {
     historyRef.current.past = []
     historyRef.current.future = []
     updateHistoryState()
-  }, [treeFilters, updateHistoryState])
+  }, [treeFiltersState, updateHistoryState])
 
   // Reset applying flag
   useEffect(() => {

@@ -136,7 +136,6 @@ export function FamilyTree({
     setNodes,
     setEdges,
     batchSavePositions,
-    treeFilters: filteredPersons, // Use filteredPersons as dependency for resetting history
   })
 
   const { onNodeDrag, onNodeDragStop } = useNodeDragging({

@@ -44,9 +44,12 @@ interface FamilyTreeCanvasProps {
   panOnDrag?: boolean | number[]
   nodesDraggable?: boolean
   onMiniMapClick?: (event: React.MouseEvent, position: { x: number; y: number }) => void
+  onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void
+  onPaneClick?: (event: React.MouseEvent) => void
   isLoading?: boolean
   loadingLabel?: string
   children?: React.ReactNode
+  contextMenu?: React.ReactNode
 }
 
 export function FamilyTreeCanvas({
@@ -62,9 +65,12 @@ export function FamilyTreeCanvas({
   panOnDrag,
   nodesDraggable,
   onMiniMapClick,
+  onNodeContextMenu,
+  onPaneClick,
   isLoading,
   loadingLabel,
   children,
+  contextMenu,
 }: FamilyTreeCanvasProps) {
   const shouldVirtualize = nodes.length >= 500
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -153,6 +159,8 @@ export function FamilyTreeCanvas({
         onNodeClick={onNodeClick}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
+        onNodeContextMenu={onNodeContextMenu}
+        onPaneClick={onPaneClick}
         onInit={onInit}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -180,6 +188,7 @@ export function FamilyTreeCanvas({
         <Background gap={12} size={1} />
         <Panel position="top-right">{children}</Panel>
       </ReactFlow>
+      {contextMenu}
     </div>
   )
 }

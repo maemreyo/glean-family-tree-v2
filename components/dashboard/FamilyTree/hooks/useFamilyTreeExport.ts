@@ -6,6 +6,7 @@ import { PersonWithPhoto } from '@/types/app'
 import { Database } from '@/types/database.types'
 import { generateGedcom } from '@/lib/gedcom'
 import { createClient } from '@/lib/supabase/client'
+import { getErrorMessage } from '@/lib/utils'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
 
@@ -110,7 +111,7 @@ export function useFamilyTreeExport({
       toast.success('JSON backup downloaded')
     } catch (error: any) {
       toast.dismiss(loadingToast)
-      toast.error('Backup Failed: ' + error.message)
+      toast.error('Backup Failed: ' + getErrorMessage(error))
     }
   }, [supabase, userId])
 

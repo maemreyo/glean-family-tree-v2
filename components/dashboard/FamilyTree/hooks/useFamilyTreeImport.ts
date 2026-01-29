@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { parseGedcom, parseGedcomDate } from '@/lib/gedcom'
+import { getErrorMessage } from '@/lib/utils'
 
 interface UseFamilyTreeImportProps {
   userId: string
@@ -93,7 +94,7 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
       window.location.reload()
     } catch (error: any) {
       toast.dismiss(loadingToast)
-      toast.error('Import Failed: ' + error.message)
+      toast.error('Import Failed: ' + getErrorMessage(error))
     }
   }
 
@@ -221,7 +222,7 @@ export function useFamilyTreeImport({ userId }: UseFamilyTreeImportProps) {
       window.location.reload()
     } catch (error: any) {
       toast.dismiss(loadingToast)
-      toast.error('Restore Failed: ' + error.message)
+      toast.error('Restore Failed: ' + getErrorMessage(error))
     }
   }
 

@@ -23,8 +23,10 @@ import { useFamilyTreeLayout } from './hooks/useFamilyTreeLayout'
 import { useFamilyTreeExport } from './hooks/useFamilyTreeExport'
 import { useFamilyTreeImport } from './hooks/useFamilyTreeImport'
 import { usePositionManagement } from './hooks/usePositionManagement'
+import { useTreeFilters } from './hooks/useTreeFilters'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
+import { NodeContextMenu } from './NodeContextMenu'
 import { getLayoutedElements, updateSharedChildEdges } from './utils/dagre-layout'
 import { toast } from 'sonner'
 import 'reactflow/dist/style.css'
@@ -39,6 +41,7 @@ interface FamilyTreeProps {
 }
 
 const EMPTY_RELATIONSHIPS: Relationship[] = []
+const MAX_HISTORY_SIZE = 50
 
 export function FamilyTree({ 
   userId, 
@@ -60,6 +63,11 @@ export function FamilyTree({
   const { mutateAsync: deletePerson } = useDeletePerson()
   const { mutateAsync: deleteRelationship } = useDeleteRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
+  const [contextMenu, setContextMenu] = useState<{
+    id: string
+    top: number
+    left: number
+  } | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [isSpacePressed, setIsSpacePressed] = useState(false)
   const [actionLoadingLabel, setActionLoadingLabel] = useState<string | null>(null)
@@ -69,154 +77,10 @@ export function FamilyTree({
   const canvasLoadingLabel = isActionLoading
     ? actionLoadingLabel ?? undefined
     : isInitialLoading
-      ? 'Đang tải cây phả hệ...'
+      ? 'Loading family tree...'
       : undefined
 
-  const relationshipIndex = useMemo(() => {
-    const index = new Map<string, { isParent: boolean; isChild: boolean; isSpouse: boolean }>()
-    persons.forEach((person) => {
-      index.set(person.id, { isParent: false, isChild: false, isSpouse: false })
-    })
-    relationships.forEach((rel) => {
-      if (!index.has(rel.from_person_id)) {
-        index.set(rel.from_person_id, { isParent: false, isChild: false, isSpouse: false })
-      }
-      if (!index.has(rel.to_person_id)) {
-        index.set(rel.to_person_id, { isParent: false, isChild: false, isSpouse: false })
-      }
-      if (rel.type === 'parent') {
-        index.get(rel.from_person_id)!.isParent = true
-        index.get(rel.to_person_id)!.isChild = true
-      }
-      if (rel.type === 'spouse') {
-        index.get(rel.from_person_id)!.isSpouse = true
-        index.get(rel.to_person_id)!.isSpouse = true
-      }
-    })
-    return index
-  }, [persons, relationships])
-
-  const filteredPersons = useMemo(() => {
-    const normalize = (value: string | null | undefined) => value?.toLowerCase().trim() ?? ''
-    const minYearRaw = treeFilters.birthYear.min.trim()
-    const maxYearRaw = treeFilters.birthYear.max.trim()
-    const minYear = minYearRaw ? Number(minYearRaw) : null
-    const maxYear = maxYearRaw ? Number(maxYearRaw) : null
-    const hasMinYear = minYear !== null && Number.isFinite(minYear)
-    const hasMaxYear = maxYear !== null && Number.isFinite(maxYear)
-    const keyword = normalize(treeFilters.keyword)
-    const birthPlace = normalize(treeFilters.birthPlace)
-    const deathPlace = normalize(treeFilters.deathPlace)
-    const occupation = normalize(treeFilters.occupation)
-    const tagTokens = treeFilters.tags
-      .split(',')
-      .map((token) => token.trim().toLowerCase())
-      .filter(Boolean)
-    const relationshipFilters = treeFilters.relationships
-    const isAllRelationshipsSelected =
-      relationshipFilters.parent &&
-      relationshipFilters.child &&
-      relationshipFilters.spouse
-    const hasAnyRelationshipFilter =
-      relationshipFilters.parent ||
-      relationshipFilters.child ||
-      relationshipFilters.spouse
-
-    return persons.filter((person) => {
-      const genderValue = normalize(person.gender)
-      const genderKey =
-        !genderValue
-          ? 'unknown'
-          : genderValue === 'male' || genderValue === 'm' || genderValue === 'nam'
-            ? 'male'
-            : genderValue === 'female' || genderValue === 'f' || genderValue === 'nu' || genderValue === 'nữ'
-              ? 'female'
-              : 'other'
-      if (!treeFilters.gender[genderKey as keyof typeof treeFilters.gender]) return false
-
-      const statusKey =
-        person.is_deceased === true
-          ? 'deceased'
-          : person.is_deceased === false
-            ? 'living'
-            : 'unknown'
-      if (!treeFilters.status[statusKey as keyof typeof treeFilters.status]) return false
-
-      if (hasMinYear || hasMaxYear) {
-        const birthYearMatch = person.date_of_birth?.match(/\d{4}/)
-        const birthYear = birthYearMatch ? Number(birthYearMatch[0]) : null
-        if (hasMinYear && (birthYear === null || birthYear < minYear)) return false
-        if (hasMaxYear && (birthYear === null || birthYear > maxYear)) return false
-      }
-
-      if (treeFilters.hasPhoto && (!person.person_photos || person.person_photos.length === 0)) {
-        return false
-      }
-      if (treeFilters.hasBiography && !person.biography?.trim()) {
-        return false
-      }
-
-      if (birthPlace && !normalize(person.birth_place).includes(birthPlace)) return false
-      if (deathPlace && !normalize(person.death_place).includes(deathPlace)) return false
-      if (occupation && !normalize(person.occupation).includes(occupation)) return false
-
-      if (keyword) {
-        const keywordSource = [
-          person.name,
-          person.nickname,
-          person.biography,
-          person.notes,
-          person.source_notes,
-          person.birth_place,
-          person.death_place,
-          person.occupation,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-        if (!keywordSource.includes(keyword)) return false
-      }
-
-      if (tagTokens.length > 0) {
-        const tagSource = [person.notes, person.source_notes, person.biography]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-        const tagsMatch = tagTokens.every((token) => tagSource.includes(token))
-        if (!tagsMatch) return false
-      }
-
-      if (!isAllRelationshipsSelected) {
-        if (!hasAnyRelationshipFilter) return false
-        const flags = relationshipIndex.get(person.id) ?? {
-          isParent: false,
-          isChild: false,
-          isSpouse: false,
-        }
-        const matchesRelationship =
-          (relationshipFilters.parent && flags.isParent) ||
-          (relationshipFilters.child && flags.isChild) ||
-          (relationshipFilters.spouse && flags.isSpouse)
-        if (!matchesRelationship) return false
-      }
-
-      return true
-    })
-  }, [persons, relationshipIndex, treeFilters])
-
-  const filteredRelationships = useMemo(() => {
-    const allowedPersonIds = new Set(filteredPersons.map((person) => person.id))
-    const allowParentEdges =
-      treeFilters.relationships.parent || treeFilters.relationships.child
-    return relationships.filter((rel) => {
-      if (!allowedPersonIds.has(rel.from_person_id) || !allowedPersonIds.has(rel.to_person_id)) {
-        return false
-      }
-      if (rel.type === 'spouse') return treeFilters.relationships.spouse
-      if (rel.type === 'parent') return allowParentEdges
-      return true
-    })
-  }, [filteredPersons, relationships, treeFilters.relationships])
+  const { filteredPersons, filteredRelationships } = useTreeFilters(persons, relationships)
 
   // Custom hooks
   const { nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange } = useFamilyTreeLayout({
@@ -251,6 +115,7 @@ export function FamilyTree({
     future: [],
   })
   const isApplyingHistoryRef = useRef(false)
+  const layoutInProgressRef = useRef(false)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
 
@@ -261,10 +126,13 @@ export function FamilyTree({
 
   const runAction = useCallback(async (label: string, action: () => Promise<void> | void) => {
     setActionLoadingLabel(label)
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    // Give UI time to update
+    await new Promise((resolve) => setTimeout(resolve, 50))
     try {
       await action()
     } finally {
+      // Ensure UI updates before removing loading state
+      await new Promise((resolve) => requestAnimationFrame(resolve))
       setActionLoadingLabel(null)
     }
   }, [])
@@ -291,7 +159,7 @@ export function FamilyTree({
     if (isApplyingHistoryRef.current) return
     historyRef.current.past.push(createSnapshot())
     historyRef.current.future = []
-    if (historyRef.current.past.length > 50) {
+    if (historyRef.current.past.length > MAX_HISTORY_SIZE) {
       historyRef.current.past.shift()
     }
     updateHistoryState()
@@ -422,6 +290,31 @@ export function FamilyTree({
     [saveNodePosition, readOnly, refreshSharedChildEdges]
   )
 
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      event.preventDefault()
+      
+      const pane = (event.target as Element).closest('.react-flow')
+      if (pane) {
+        const rect = pane.getBoundingClientRect()
+        setContextMenu({
+          id: node.id,
+          top: event.clientY - rect.top,
+          left: event.clientX - rect.left,
+        })
+      } else {
+        setContextMenu({
+          id: node.id,
+          top: event.clientY,
+          left: event.clientX,
+        })
+      }
+    },
+    []
+  )
+
+  const onPaneClick = useCallback(() => setContextMenu(null), [])
+
   const handleMiniMapClick = useCallback(
     (_: React.MouseEvent, position: { x: number; y: number }) => {
       if (!rfInstance) return
@@ -433,44 +326,80 @@ export function FamilyTree({
     [rfInstance]
   )
 
-  const handleAutoLayout = useCallback(async () => {
-    await runAction('Đang sắp xếp...', async () => {
-      const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges)
-      setNodes(newNodes)
-      setEdges(newEdges)
+  const handleFocusPerson = useCallback(
+    (personId: string) => {
+      if (!rfInstance) return
 
-      try {
-        await batchSavePositions(newNodes)
-        toast.success('Layout saved')
-      } catch (error) {
-        console.error('Failed to save layout:', error)
-        toast.error('Failed to save layout')
+      const node = nodes.find((n) => n.id === personId)
+      if (!node) {
+        toast.error('Person not found in current view')
+        return
       }
-    })
+
+      rfInstance.fitView({
+        nodes: [{ id: personId }],
+        padding: 2,
+        duration: 800,
+      })
+      
+      setNodes((nds) => 
+        nds.map((n) => ({
+          ...n,
+          selected: n.id === personId
+        }))
+      )
+    },
+    [rfInstance, nodes, setNodes]
+  )
+
+  const handleAutoLayout = useCallback(async () => {
+    if (layoutInProgressRef.current) {
+      toast.warning('Layout already in progress')
+      return
+    }
+
+    layoutInProgressRef.current = true
+    try {
+      await runAction('Arranging...', async () => {
+        const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges)
+        setNodes(newNodes)
+        setEdges(newEdges)
+
+        try {
+          await batchSavePositions(newNodes)
+          toast.success('Layout saved')
+        } catch (error) {
+          console.error('Failed to save layout:', error)
+          toast.error('Failed to save layout')
+        }
+      })
+    } finally {
+      layoutInProgressRef.current = false
+    }
   }, [nodes, edges, setNodes, setEdges, batchSavePositions, runAction])
 
   const handleExport = useCallback(async () => {
-    await runAction('Đang xuất PNG...', onExport)
+    await runAction('Exporting PNG...', onExport)
   }, [onExport, runAction])
 
   const handleExportGedcom = useCallback(async () => {
-    await runAction('Đang xuất GEDCOM...', onExportGedcom)
+    await runAction('Exporting GEDCOM...', onExportGedcom)
   }, [onExportGedcom, runAction])
 
   const handleExportJson = useCallback(async () => {
-    await runAction('Đang xuất JSON...', onExportJson)
+    await runAction('Exporting JSON...', onExportJson)
   }, [onExportJson, runAction])
 
   const handleImportGedcomWithLoading = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
-      await runAction('Đang nhập GEDCOM...', () => handleImportGedcom(event))
+      await runAction('Importing GEDCOM...', () => handleImportGedcom(event))
     },
     [handleImportGedcom, runAction]
   )
 
   const handleImportJsonWithLoading = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
-      await runAction('Đang nhập JSON...', () => handleImportJson(event))
+      await runAction('Importing JSON...', () => handleImportJson(event))
     },
     [handleImportJson, runAction]
   )
@@ -653,13 +582,29 @@ export function FamilyTree({
         panOnDrag={isSpacePressed ? [1] : false}
         nodesDraggable={!isSpacePressed && !readOnly}
         onMiniMapClick={handleMiniMapClick}
+        onNodeContextMenu={onNodeContextMenu}
+        onPaneClick={onPaneClick}
         isLoading={isInitialLoading || isActionLoading}
         loadingLabel={canvasLoadingLabel}
+        contextMenu={
+          contextMenu && (
+            <NodeContextMenu
+              id={contextMenu.id}
+              top={contextMenu.top}
+              left={contextMenu.left}
+              onEdit={openPersonModal}
+              onDelete={handleDeletePersonFromNode}
+              onClose={() => setContextMenu(null)}
+            />
+          )
+        }
       >
         <FamilyTreeControls
           userId={userId}
+          persons={filteredPersons}
           readOnly={readOnly}
           onAutoLayout={handleAutoLayout}
+          onFocus={handleFocusPerson}
           onExport={handleExport}
           onExportGedcom={handleExportGedcom}
           onExportJson={handleExportJson}

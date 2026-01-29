@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ShareDialog } from './ShareDialog'
+import { PrintDialog } from './PrintDialog'
 import { useUIStore } from '@/providers/ui-store-provider'
 import { RefObject, useEffect } from 'react'
 import { FilterPanel } from './controls/FilterPanel'
@@ -85,6 +86,8 @@ export function FamilyTreeControls({
         <Button onClick={onAutoLayout} variant="ghost" size="icon" title="Auto Layout" disabled={isBusy} className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50">
           <RotateCw className="h-4 w-4" />
         </Button>
+
+        <PrintDialog />
 
         <Popover open={filterOpen} onOpenChange={onFilterOpenChange} modal={false}>
           <PopoverTrigger asChild>

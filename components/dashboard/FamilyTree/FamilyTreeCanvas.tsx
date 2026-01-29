@@ -49,6 +49,8 @@ export function FamilyTreeCanvas({
   onInit,
   children,
 }: FamilyTreeCanvasProps) {
+  const shouldVirtualize = nodes.length >= 500
+
   return (
     <div className="h-full w-full rounded-lg border bg-card text-card-foreground shadow-sm">
       <ReactFlow
@@ -64,6 +66,7 @@ export function FamilyTreeCanvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
+        onlyRenderVisibleElements={shouldVirtualize}
         fitView
         fitViewOptions={{ padding: 0.3 }}
         defaultEdgeOptions={{

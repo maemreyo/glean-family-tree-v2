@@ -6,6 +6,17 @@ import { User, Heart, X } from 'lucide-react'
 export function PersonNode({ id, data }: NodeProps) {
   const profilePhoto = data.person_photos?.find((p: any) => p.is_profile_picture) || data.person_photos?.[0]
   const hasSpouses = data.spouseCount > 0
+  const statusKey =
+    data.is_deceased === true ? 'deceased' : data.is_deceased === false ? 'living' : 'unknown'
+  const genderValue = typeof data.gender === 'string' ? data.gender.toLowerCase() : ''
+  const genderKey =
+    genderValue === 'male' || genderValue === 'm' || genderValue === 'nam'
+      ? 'male'
+      : genderValue === 'female' || genderValue === 'f' || genderValue === 'nu' || genderValue === 'nữ'
+        ? 'female'
+        : genderValue
+          ? 'other'
+          : 'unknown'
 
   const handleDelete = (event: MouseEvent) => {
     event.stopPropagation()
@@ -31,9 +42,14 @@ export function PersonNode({ id, data }: NodeProps) {
         </div>
       )}
       
-      <div className={`flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-card text-card-foreground p-2 shadow-sm transition-all hover:shadow-md ${
+      <div
+        className={`person-node flex h-[50px] w-[200px] items-center gap-3 rounded-lg border bg-card text-card-foreground p-2 shadow-sm transition-all hover:shadow-md ${
         hasSpouses ? 'ring-2 ring-[color:var(--spouse-ring)]' : ''
-      }`}>
+      }`}
+        data-status={statusKey}
+        data-gender={genderKey}
+      >
+        <div className="person-node-accent" />
         {!data?.readOnly && (
           <button
             type="button"
@@ -51,7 +67,7 @@ export function PersonNode({ id, data }: NodeProps) {
           style={{ top: -6 }}
         />
         
-        <Avatar className="h-8 w-8 border">
+        <Avatar className="person-node-avatar h-8 w-8 border">
           <AvatarImage src={profilePhoto?.url} alt={data.label} className="object-cover" />
           <AvatarFallback className="bg-muted text-muted-foreground">
             <User className="h-4 w-4" />

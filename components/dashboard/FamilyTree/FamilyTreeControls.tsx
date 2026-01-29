@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ShareDialog } from './ShareDialog'
 import { useUIStore } from '@/providers/ui-store-provider'
+import { RefObject, useEffect } from 'react'
 
 interface FamilyTreeControlsProps {
   userId: string
@@ -36,6 +37,9 @@ interface FamilyTreeControlsProps {
   onRedo: () => void
   canUndo: boolean
   canRedo: boolean
+  filterOpen: boolean
+  onFilterOpenChange: (open: boolean) => void
+  keywordInputRef?: RefObject<HTMLInputElement | null>
 }
 
 export function FamilyTreeControls({
@@ -51,12 +55,22 @@ export function FamilyTreeControls({
   onRedo,
   canUndo,
   canRedo,
+  filterOpen,
+  onFilterOpenChange,
+  keywordInputRef,
 }: FamilyTreeControlsProps) {
   const treeFilters = useUIStore((state) => state.treeFilters)
   const setTreeFilters = useUIStore((state) => state.setTreeFilters)
   const resetTreeFilters = useUIStore((state) => state.resetTreeFilters)
   const showStatsPanel = useUIStore((state) => state.showStatsPanel)
   const toggleStatsPanel = useUIStore((state) => state.toggleStatsPanel)
+
+  useEffect(() => {
+    if (!filterOpen) return
+    const input = keywordInputRef?.current
+    if (!input) return
+    requestAnimationFrame(() => input.focus())
+  }, [filterOpen, keywordInputRef])
 
   return (
     <div className="flex gap-2">
@@ -67,7 +81,7 @@ export function FamilyTreeControls({
         Auto Layout
       </Button>
 
-      <Popover>
+      <Popover open={filterOpen} onOpenChange={onFilterOpenChange}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <SlidersHorizontal className="h-4 w-4" />
@@ -328,6 +342,7 @@ export function FamilyTreeControls({
             <div className="grid gap-2">
               <span className="text-xs font-medium text-muted-foreground">Từ khóa</span>
               <Input
+                ref={keywordInputRef}
                 placeholder="Tên, ghi chú, tiểu sử..."
                 value={treeFilters.keyword}
                 onChange={(event) =>

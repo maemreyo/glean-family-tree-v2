@@ -59,6 +59,9 @@ export function FamilyTree({
   const { mutateAsync: deletePerson } = useDeletePerson()
   const { mutateAsync: deleteRelationship } = useDeleteRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const keywordInputRef = useRef<HTMLInputElement | null>(null)
 
   const relationshipIndex = useMemo(() => {
     const index = new Map<string, { isParent: boolean; isChild: boolean; isSpouse: boolean }>()
@@ -247,6 +250,17 @@ export function FamilyTree({
     setCanRedo(historyRef.current.future.length > 0)
   }, [])
 
+  const isEditableElement = useCallback((element: Element | null) => {
+    if (!element) return false
+    const tagName = element.tagName.toLowerCase()
+    return (
+      tagName === 'input' ||
+      tagName === 'textarea' ||
+      tagName === 'select' ||
+      (element as HTMLElement).isContentEditable
+    )
+  }, [])
+
   const createSnapshot = useCallback(() => {
     return {
       nodes: structuredClone(nodes),
@@ -300,6 +314,59 @@ export function FamilyTree({
     updateHistoryState()
   }, [treeFilters, updateHistoryState])
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase()
+      const isMod = event.ctrlKey || event.metaKey
+      const isEditable = isEditableElement(document.activeElement)
+
+      if (key === ' ' && !isEditable) {
+        event.preventDefault()
+        if (!isSpacePressed) {
+          setIsSpacePressed(true)
+        }
+        return
+      }
+
+      if (!isMod) return
+      if (isEditable && key !== 'f') return
+
+      if (key === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) {
+          handleRedo()
+        } else {
+          handleUndo()
+        }
+      }
+
+      if (key === 'f') {
+        event.preventDefault()
+        setFilterOpen(true)
+      }
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === ' ') {
+        setIsSpacePressed(false)
+      }
+    }
+
+    const handleBlur = () => {
+      setIsSpacePressed(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [handleRedo, handleUndo, isEditableElement, isSpacePressed])
+
   // Handlers
   const refreshSharedChildEdges = useCallback(
     (movedNode: Node) => {
@@ -334,6 +401,17 @@ export function FamilyTree({
       dragNodeIdRef.current = null
     },
     [saveNodePosition, readOnly, refreshSharedChildEdges]
+  )
+
+  const handleMiniMapClick = useCallback(
+    (_: React.MouseEvent, position: { x: number; y: number }) => {
+      if (!rfInstance) return
+      rfInstance.setCenter(position.x, position.y, {
+        zoom: rfInstance.getZoom(),
+        duration: 200,
+      })
+    },
+    [rfInstance]
   )
 
   const handleAutoLayout = useCallback(async () => {
@@ -525,6 +603,9 @@ export function FamilyTree({
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onInit={setRfInstance}
+        panOnDrag={isSpacePressed ? [1] : false}
+        nodesDraggable={!isSpacePressed && !readOnly}
+        onMiniMapClick={handleMiniMapClick}
       >
         <FamilyTreeControls
           userId={userId}
@@ -539,6 +620,9 @@ export function FamilyTree({
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
+        filterOpen={filterOpen}
+        onFilterOpenChange={setFilterOpen}
+        keywordInputRef={keywordInputRef}
         />
       </FamilyTreeCanvas>
 

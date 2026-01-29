@@ -1,9 +1,15 @@
 import dagre from 'dagre'
 import { Node, Edge, Position } from 'reactflow'
 
-const nodeWidth = 200
-const nodeHeight = 50
-const spouseGap = 50 // Khoảng cách giữa các spouse
+const DEFAULT_NODE_WIDTH = 200
+const DEFAULT_NODE_HEIGHT = 50
+const SPOUSE_GAP = 50 // Khoảng cách giữa các spouse
+
+interface LayoutOptions {
+  direction?: string
+  nodeWidth?: number
+  nodeHeight?: number
+}
 
 function findSpouseGroups(edges: Edge[]): Map<string, string[]> {
   const spouseMap = new Map<string, string[]>()
@@ -33,8 +39,10 @@ function findSpouseGroups(edges: Edge[]): Map<string, string[]> {
 function positionSpousesHorizontally(
   nodes: Node[],
   spouseMap: Map<string, string[]>,
-  basePositions: Map<string, { x: number; y: number }>
+  basePositions: Map<string, { x: number; y: number }>,
+  options: LayoutOptions
 ): Node[] {
+  const { nodeWidth = DEFAULT_NODE_WIDTH } = options
   const positioned = new Set<string>()
   const newNodes = [...nodes]
   
@@ -69,7 +77,7 @@ function positionSpousesHorizontally(
     // Let's use the logic from the previous attempt: Center the group.
     
     const groupSize = group.length
-    const totalGroupWidth = groupSize * nodeWidth + (groupSize - 1) * spouseGap
+    const totalGroupWidth = groupSize * nodeWidth + (groupSize - 1) * SPOUSE_GAP
     
     // Use the position of the personId as the center reference? 
     // Or average of all group members?
@@ -85,7 +93,7 @@ function positionSpousesHorizontally(
         newNodes[memberIndex] = {
           ...newNodes[memberIndex],
           position: {
-            x: startX + index * (nodeWidth + spouseGap),
+            x: startX + index * (nodeWidth + SPOUSE_GAP),
             y: basePos.y
           }
         }
@@ -97,7 +105,8 @@ function positionSpousesHorizontally(
   return newNodes
 }
 
-export function syncSpouseData(nodes: Node[], edges: Edge[]) {
+export function syncSpouseData(nodes: Node[], edges: Edge[], options: LayoutOptions = {}) {
+  const { nodeWidth = DEFAULT_NODE_WIDTH, nodeHeight = DEFAULT_NODE_HEIGHT } = options
   const spouseMap = findSpouseGroups(edges)
 
   // Add spouse count to node data
@@ -187,7 +196,8 @@ export function syncSpouseData(nodes: Node[], edges: Edge[]) {
   return { nodes: nodesWithSpouseData, edges: updatedEdges }
 }
 
-export function updateSharedChildEdges(nodes: Node[], edges: Edge[]) {
+export function updateSharedChildEdges(nodes: Node[], edges: Edge[], options: LayoutOptions = {}) {
+  const { nodeWidth = DEFAULT_NODE_WIDTH, nodeHeight = DEFAULT_NODE_HEIGHT } = options
   const nodeById = new Map(nodes.map((node) => [node.id, node]))
   return edges.map((edge) => {
     const sharedChild = edge.data?.sharedChild && Array.isArray(edge.data?.spousePair)
@@ -216,7 +226,9 @@ export function updateSharedChildEdges(nodes: Node[], edges: Edge[]) {
   })
 }
 
-export function getLayoutedElements(nodes: Node[], edges: Edge[], direction = 'TB') {
+export function getLayoutedElements(nodes: Node[], edges: Edge[], options: LayoutOptions = {}) {
+  const { direction = 'TB', nodeWidth = DEFAULT_NODE_WIDTH, nodeHeight = DEFAULT_NODE_HEIGHT } = options
+  
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
 
@@ -275,13 +287,15 @@ export function getLayoutedElements(nodes: Node[], edges: Edge[], direction = 'T
         x: pos.x - nodeWidth / 2,
         y: pos.y - nodeHeight / 2,
       },
+      width: nodeWidth,
+      height: nodeHeight,
     }
   })
   
   // Adjust positions to place spouses horizontally next to each other
-  positionedNodes = positionSpousesHorizontally(positionedNodes, spouseMap, basePositions)
+  positionedNodes = positionSpousesHorizontally(positionedNodes, spouseMap, basePositions, options)
 
   // Sync spouse data (update handles and node data) and return
   // This step ensures the edges point to the correct handles based on the final positions
-  return syncSpouseData(positionedNodes, edges)
+  return syncSpouseData(positionedNodes, edges, options)
 }

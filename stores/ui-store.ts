@@ -53,6 +53,8 @@ export type UIStore = {
   treePosition: { x: number; y: number }
   setTreePosition: (pos: { x: number; y: number }) => void
   resetTreeView: () => void
+  nodeDisplayMode: string
+  setNodeDisplayMode: (mode: string) => void
   showStatsPanel: boolean
   toggleStatsPanel: () => void
   treeFilters: TreeFilters
@@ -133,6 +135,8 @@ export const createUIStore = () => {
         treeZoom: DEFAULT_ZOOM,
         treePosition: DEFAULT_TREE_POSITION,
       }),
+    nodeDisplayMode: 'default',
+    setNodeDisplayMode: (mode) => set({ nodeDisplayMode: mode }),
     showStatsPanel: false,
     toggleStatsPanel: () =>
       set((state) => ({ showStatsPanel: !state.showStatsPanel })),

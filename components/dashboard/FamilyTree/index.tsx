@@ -60,6 +60,21 @@ export function FamilyTree({
   // UI state
   const openPersonModal = useUIStore((state) => state.openPersonModal)
   const treeFilters = useUIStore((state) => state.treeFilters)
+  const nodeDisplayMode = useUIStore((state) => state.nodeDisplayMode)
+  
+  const layoutOptions = useMemo(() => {
+    switch (nodeDisplayMode) {
+      case 'compact':
+        return { nodeWidth: 140, nodeHeight: 40 }
+      case 'portrait':
+        return { nodeWidth: 180, nodeHeight: 240 }
+      case 'detailed':
+        return { nodeWidth: 240, nodeHeight: 80 }
+      default:
+        return { nodeWidth: 200, nodeHeight: 50 }
+    }
+  }, [nodeDisplayMode])
+
   const { mutate: createRelationship } = useCreateRelationship()
   const { mutateAsync: deletePerson } = useDeletePerson()
   const { mutateAsync: deleteRelationship } = useDeleteRelationship()
@@ -87,6 +102,7 @@ export function FamilyTree({
   const { nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange } = useFamilyTreeLayout({
     persons: filteredPersons,
     relationships: filteredRelationships,
+    layoutOptions,
   })
 
   const { onExport, onExportGedcom, onExportJson } = useFamilyTreeExport({
@@ -362,7 +378,7 @@ export function FamilyTree({
     layoutInProgressRef.current = true
     try {
       await runAction('Arranging...', async () => {
-        const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges)
+        const { nodes: newNodes, edges: newEdges } = getLayoutedElements(nodes, edges, layoutOptions)
         setNodes(newNodes)
         setEdges(newEdges)
 
@@ -377,7 +393,7 @@ export function FamilyTree({
     } finally {
       layoutInProgressRef.current = false
     }
-  }, [nodes, edges, setNodes, setEdges, batchSavePositions, runAction])
+  }, [nodes, edges, setNodes, setEdges, batchSavePositions, runAction, layoutOptions])
 
   const handleExport = useCallback(async () => {
     await runAction('Exporting PNG...', onExport)

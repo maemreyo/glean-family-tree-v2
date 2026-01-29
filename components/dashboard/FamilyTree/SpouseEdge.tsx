@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react'
 import { EdgeLabelRenderer, EdgeProps, getSmoothStepPath } from 'reactflow'
 import { Heart, X } from 'lucide-react'
 import { useEdgeHover } from './hooks/useEdgeHover'
+import { useThemeColors } from './hooks/useThemeColors'
 
 export function SpouseEdge({
   id,
@@ -16,6 +17,11 @@ export function SpouseEdge({
   markerEnd,
 }: EdgeProps) {
   const { isHovered, handleEnter, handleLeave } = useEdgeHover(240)
+  const themeColors = useThemeColors()
+  const spouseStroke =
+    typeof style?.stroke === 'string' && !style.stroke.includes('var(')
+      ? style.stroke
+      : themeColors.spouse
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -40,25 +46,21 @@ export function SpouseEdge({
         <>
       <path
         id={`${id}-hitbox`}
-        className="react-flow__edge-path"
         d={edgePath}
-        style={{
-          strokeWidth: 'var(--edge-hitbox-width)',
-          stroke: 'transparent',
-        }}
+        stroke="transparent"
+        strokeWidth={themeColors.hitboxWidth}
+        fill="none"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       />
       <path
         id={`${id}-bg`}
-        className="react-flow__edge-path"
         d={edgePath}
-        style={{
-          strokeWidth: 'var(--edge-spouse-bg-width)',
-          stroke: 'var(--relationship-spouse-bg)',
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        }}
+        stroke={themeColors.spouseBg}
+        strokeWidth={themeColors.spouseBgWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       />
@@ -66,17 +68,14 @@ export function SpouseEdge({
       {/* Main pink edge */}
       <path
         id={id}
-        className="react-flow__edge-path"
         d={edgePath}
-        style={{
-          ...style,
-          strokeWidth: 'var(--edge-spouse-width)',
-          stroke: 'var(--relationship-spouse)',
-          strokeDasharray: '10 5',
-          animation: 'dash 1s linear infinite',
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        }}
+        stroke={spouseStroke}
+        strokeWidth={themeColors.spouseWidth}
+        strokeDasharray="10 5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        style={{ animation: 'dash 1s linear infinite' }}
         markerEnd={markerEnd}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
@@ -92,8 +91,20 @@ export function SpouseEdge({
         style={{ pointerEvents: 'none' }}
       >
         <div className="flex items-center justify-center w-full h-full animate-pulse">
-          <div className="rounded-full p-1 border-2 shadow-sm bg-[color:var(--spouse-heart-bg)] border-[color:var(--spouse-heart-border)]">
-            <Heart className="h-3 w-3 text-[color:var(--spouse-heart-icon)] fill-[color:var(--spouse-heart-icon)]" />
+          <div 
+            className="rounded-full p-1 border-2 shadow-sm flex items-center justify-center"
+            style={{ 
+              backgroundColor: themeColors.spouseHeartBg,
+              borderColor: themeColors.spouseHeartBorder 
+            }}
+          >
+            <Heart 
+              className="h-3 w-3" 
+              style={{ 
+                color: themeColors.spouseHeartIcon,
+                fill: themeColors.spouseHeartIcon
+              }} 
+            />
           </div>
         </div>
       </foreignObject>
@@ -146,6 +157,13 @@ export function RelationshipEdge({
   markerEnd,
 }: EdgeProps) {
   const { isHovered, handleEnter, handleLeave } = useEdgeHover(240)
+  const themeColors = useThemeColors()
+  const parentStroke =
+    typeof style?.stroke === 'string' && !style.stroke.includes('var(')
+      ? style.stroke
+      : themeColors.parent
+  const parentStrokeWidth =
+    typeof style?.strokeWidth === 'number' ? style.strokeWidth : themeColors.parentWidth
   const resolvedSourceX = typeof data?.sourceX === 'number' ? data.sourceX : sourceX
   const resolvedSourceY = typeof data?.sourceY === 'number' ? data.sourceY : sourceY
   const [edgePath, labelX, labelY] = getSmoothStepPath({
@@ -155,6 +173,7 @@ export function RelationshipEdge({
     targetX,
     targetY,
     targetPosition,
+    borderRadius: 8,
   })
 
   const handleDelete = (event: MouseEvent) => {
@@ -171,26 +190,32 @@ export function RelationshipEdge({
         <>
           <path
             id={`${id}-hitbox`}
-            className="react-flow__edge-path"
             d={edgePath}
-            style={{
-              strokeWidth: 'var(--edge-hitbox-width)',
-              stroke: 'transparent',
-            }}
+            stroke="transparent"
+            strokeWidth={themeColors.hitboxWidth}
+            fill="none"
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          />
+          <path
+            id={`${id}-bg`}
+            d={edgePath}
+            stroke={themeColors.parentBg}
+            strokeWidth={themeColors.spouseBgWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
           />
           <path
             id={id}
-            className="react-flow__edge-path"
             d={edgePath}
-            style={{
-              ...style,
-              strokeWidth: 'var(--edge-parent-width)',
-              stroke: style?.stroke || 'var(--relationship-parent)',
-              strokeLinecap: 'round',
-              strokeLinejoin: 'round',
-            }}
+            stroke={parentStroke}
+            strokeWidth={parentStrokeWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
             markerEnd={markerEnd}
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}

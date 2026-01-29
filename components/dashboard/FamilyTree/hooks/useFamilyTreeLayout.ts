@@ -6,12 +6,19 @@ import { getLayoutedElements, syncSpouseData } from '../utils/dagre-layout'
 
 type Relationship = Database['public']['Tables']['relationships']['Row']
 
+interface LayoutOptions {
+  direction?: string
+  nodeWidth?: number
+  nodeHeight?: number
+}
+
 interface UseFamilyTreeLayoutProps {
   persons: PersonWithPhoto[]
   relationships: Relationship[]
+  layoutOptions?: LayoutOptions
 }
 
-export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLayoutProps) {
+export function useFamilyTreeLayout({ persons, relationships, layoutOptions = {} }: UseFamilyTreeLayoutProps) {
   const hasSavedPositions = useMemo(() => {
     return persons.some(
       (p) =>
@@ -26,8 +33,10 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
       data: { label: person.name, ...person },
       position: { x: person.position_x || 0, y: person.position_y || 0 },
       type: 'person',
+      width: layoutOptions.nodeWidth,
+      height: layoutOptions.nodeHeight,
     }))
-  }, [persons])
+  }, [persons, layoutOptions.nodeWidth, layoutOptions.nodeHeight])
 
   const initialEdges: Edge[] = useMemo(() => {
     const spousePairs = new Set<string>()
@@ -99,10 +108,10 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
         targetPosition: Position.Top,
         sourcePosition: Position.Bottom,
       }))
-      return syncSpouseData(savedNodes, initialEdges)
+      return syncSpouseData(savedNodes, initialEdges, layoutOptions)
     }
-    return getLayoutedElements(initialNodes, initialEdges)
-  }, [initialNodes, initialEdges, hasSavedPositions])
+    return getLayoutedElements(initialNodes, initialEdges, layoutOptions)
+  }, [initialNodes, initialEdges, hasSavedPositions, layoutOptions])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges)
@@ -110,14 +119,17 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
   // Smart sync to prevent position reset
   const prevPersonIdsRef = useRef<Set<string>>(new Set())
   const prevRelationshipIdsRef = useRef<Set<string>>(new Set())
+  const prevLayoutOptionsRef = useRef<string>('')
   const isInitializedRef = useRef(false)
 
   useEffect(() => {
     const currentPersonIds = new Set(persons.map(p => p.id))
     const currentRelationshipIds = new Set(relationships.map(r => r.id))
+    const currentLayoutOptionsStr = JSON.stringify(layoutOptions)
     
     const prevPersonIds = prevPersonIdsRef.current
     const prevRelationshipIds = prevRelationshipIdsRef.current
+    const prevLayoutOptions = prevLayoutOptionsRef.current
     
     // First initialization
     if (!isInitializedRef.current) {
@@ -126,6 +138,7 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
       setEdges(layoutedEdges)
       prevPersonIdsRef.current = currentPersonIds
       prevRelationshipIdsRef.current = currentRelationshipIds
+      prevLayoutOptionsRef.current = currentLayoutOptionsStr
       isInitializedRef.current = true
       return
     }
@@ -138,28 +151,37 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
     const relationshipsChanged =
       currentRelationshipIds.size !== prevRelationshipIds.size ||
       !Array.from(currentRelationshipIds).every(id => prevRelationshipIds.has(id))
+
+    const layoutChanged = currentLayoutOptionsStr !== prevLayoutOptions
     
-    if (personsChanged || relationshipsChanged) {
-      const addedPersons = Array.from(currentPersonIds).filter(id => !prevPersonIds.has(id))
-      // const removedPersons = Array.from(prevPersonIds).filter(id => !currentPersonIds.has(id))
+    if (personsChanged || relationshipsChanged || layoutChanged) {
+      console.log('🔄 Structural or layout changes detected')
       
-      console.log('🔄 Structural changes detected')
-      
-      // Preserve existing positions for unchanged nodes
-      const currentPositions = new Map(nodes.map(node => [node.id, node.position]))
-      
-      const updatedNodes = layoutedNodes.map(node => ({
-        ...node,
-        position: currentPositions.has(node.id) && !addedPersons.includes(node.id)
-          ? currentPositions.get(node.id)!
-          : node.position
-      }))
-      
-      setNodes(updatedNodes)
+      // If layout options changed, we should apply new layout positions
+      if (layoutChanged) {
+        setNodes(layoutedNodes)
+      } else {
+        // Preserve existing positions for unchanged nodes if only data/structure changed slightly
+        // But if structure changed significantly (new nodes), we might want to respect dagre
+        // For now keeping existing logic for structure changes
+        const addedPersons = Array.from(currentPersonIds).filter(id => !prevPersonIds.has(id))
+        const currentPositions = new Map(nodes.map(node => [node.id, node.position]))
+        
+        const updatedNodes = layoutedNodes.map(node => ({
+          ...node,
+          position: currentPositions.has(node.id) && !addedPersons.includes(node.id)
+            ? currentPositions.get(node.id)!
+            : node.position
+        }))
+        
+        setNodes(updatedNodes)
+      }
+
       setEdges(layoutedEdges)
       
       prevPersonIdsRef.current = currentPersonIds
       prevRelationshipIdsRef.current = currentRelationshipIds
+      prevLayoutOptionsRef.current = currentLayoutOptionsStr
     } else {
       // Only update node data (preserve positions)
       console.log('📝 Updating node data only')
@@ -176,7 +198,7 @@ export function useFamilyTreeLayout({ persons, relationships }: UseFamilyTreeLay
         })
       )
     }
-  }, [layoutedNodes, layoutedEdges, persons, relationships, setNodes, setEdges])
+  }, [layoutedNodes, layoutedEdges, persons, relationships, setNodes, setEdges, layoutOptions])
 
   return {
     nodes,

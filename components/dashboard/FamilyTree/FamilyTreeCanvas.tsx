@@ -46,6 +46,7 @@ interface FamilyTreeCanvasProps {
   nodesDraggable?: boolean
   onMiniMapClick?: (event: React.MouseEvent, position: { x: number; y: number }) => void
   onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void
+  onPaneContextMenu?: (event: React.MouseEvent) => void
   onPaneClick?: (event: React.MouseEvent) => void
   isLoading?: boolean
   loadingLabel?: string
@@ -69,6 +70,7 @@ export function FamilyTreeCanvas({
   nodesDraggable,
   onMiniMapClick,
   onNodeContextMenu,
+  onPaneContextMenu,
   onPaneClick,
   isLoading,
   loadingLabel,
@@ -164,6 +166,7 @@ export function FamilyTreeCanvas({
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeContextMenu={onNodeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
         onInit={onInit}
         nodeTypes={nodeTypes}

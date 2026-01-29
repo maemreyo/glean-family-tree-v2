@@ -12,6 +12,7 @@ import {
 import {
   useRelationships,
   useCreateRelationship,
+  useCreatePerson,
   useDeletePerson,
   useDeleteRelationship,
 } from '@/lib/supabase/queries'
@@ -30,6 +31,8 @@ import { useFamilyTreeContextMenu } from './hooks/useFamilyTreeContextMenu'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
 import { NodeContextMenu } from './NodeContextMenu'
+import { PaneContextMenu } from './PaneContextMenu'
+import { CreatePersonDialog } from './CreatePersonDialog'
 import { StatsPanel } from './controls/StatsPanel'
 import { getLayoutedElements } from './utils/dagre-layout'
 import { toast } from 'sonner'
@@ -78,11 +81,16 @@ export function FamilyTree({
   }, [nodeDisplayMode])
 
   const { mutate: createRelationship } = useCreateRelationship()
+  const { mutateAsync: createPerson } = useCreatePerson()
   const { mutateAsync: deletePerson } = useDeletePerson()
   const { mutateAsync: deleteRelationship } = useDeleteRelationship()
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [actionLoadingLabel, setActionLoadingLabel] = useState<string | null>(null)
+  const [createDialogState, setCreateDialogState] = useState<{
+    isOpen: boolean
+    position?: { x: number; y: number }
+  }>({ isOpen: false })
   const keywordInputRef = useRef<HTMLInputElement | null>(null)
   const isActionLoading = actionLoadingLabel !== null
   const isBusy = isInitialLoading || isActionLoading
@@ -157,9 +165,49 @@ export function FamilyTree({
     setFilterOpen,
   })
 
-  const { contextMenu, onNodeContextMenu, onPaneClick, closeContextMenu } = useFamilyTreeContextMenu()
+  const { contextMenu, onNodeContextMenu, onPaneContextMenu, onPaneClick, closeContextMenu } = useFamilyTreeContextMenu()
 
   const layoutInProgressRef = useRef(false)
+
+  const handleAddPerson = useCallback(async () => {
+    if (!contextMenu || contextMenu.type !== 'pane') return
+    if (!rfInstance) return
+
+    if (contextMenu.clientX === undefined || contextMenu.clientY === undefined) {
+      toast.error('Cannot determine position')
+      return
+    }
+
+    const position = rfInstance.screenToFlowPosition({
+      x: contextMenu.clientX,
+      y: contextMenu.clientY,
+    })
+
+    setCreateDialogState({
+      isOpen: true,
+      position,
+    })
+    closeContextMenu()
+  }, [contextMenu, rfInstance, closeContextMenu])
+
+  const handleCreatePersonSubmit = useCallback(async (values: { name: string; gender?: string }) => {
+    if (!createDialogState.position) return
+
+    try {
+      await createPerson({
+        name: values.name,
+        gender: values.gender,
+        user_id: userId,
+        position_x: createDialogState.position.x,
+        position_y: createDialogState.position.y,
+      })
+      toast.success('Person created')
+      setCreateDialogState({ isOpen: false })
+    } catch (error) {
+      console.error('Failed to create person:', error)
+      toast.error('Failed to create person')
+    }
+  }, [createDialogState.position, createPerson, userId])
 
   const runAction = useCallback(async (label: string, action: () => Promise<void> | void) => {
     setActionLoadingLabel(label)
@@ -445,20 +493,30 @@ export function FamilyTree({
         nodesDraggable={!readOnly}
         onMiniMapClick={handleMiniMapClick}
         onNodeContextMenu={onNodeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         onPaneClick={onPaneClick}
         isLoading={isInitialLoading || isActionLoading}
         loadingLabel={canvasLoadingLabel}
         statsPanel={<StatsPanel persons={persons} relationships={relationships} />}
         contextMenu={
           contextMenu && (
-            <NodeContextMenu
-              id={contextMenu.id}
-              top={contextMenu.top}
-              left={contextMenu.left}
-              onEdit={openPersonModal}
-              onDelete={handleDeletePersonFromNode}
-              onClose={closeContextMenu}
-            />
+            contextMenu.type === 'node' && contextMenu.id ? (
+              <NodeContextMenu
+                id={contextMenu.id}
+                top={contextMenu.top}
+                left={contextMenu.left}
+                onEdit={openPersonModal}
+                onDelete={handleDeletePersonFromNode}
+                onClose={closeContextMenu}
+              />
+            ) : contextMenu.type === 'pane' ? (
+              <PaneContextMenu
+                top={contextMenu.top}
+                left={contextMenu.left}
+                onAddPerson={handleAddPerson}
+                onClose={closeContextMenu}
+              />
+            ) : null
           )
         }
       >
@@ -485,6 +543,11 @@ export function FamilyTree({
       </FamilyTreeCanvas>
 
       {/* Hidden file inputs */}
+      <CreatePersonDialog
+        isOpen={createDialogState.isOpen}
+        onClose={() => setCreateDialogState((prev) => ({ ...prev, isOpen: false }))}
+        onSubmit={handleCreatePersonSubmit}
+      />
       <input
         type="file"
         ref={fileInputRef}

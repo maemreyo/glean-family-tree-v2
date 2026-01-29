@@ -86,7 +86,7 @@ export function FamilyTreeControls({
         Auto Layout
       </Button>
 
-      <Popover open={filterOpen} onOpenChange={onFilterOpenChange}>
+      <Popover open={filterOpen} onOpenChange={onFilterOpenChange} modal={false}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <SlidersHorizontal className="h-4 w-4" />

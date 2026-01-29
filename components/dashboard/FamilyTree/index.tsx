@@ -27,6 +27,7 @@ import { useTreeFilters } from './hooks/useTreeFilters'
 import { FamilyTreeCanvas } from './FamilyTreeCanvas'
 import { FamilyTreeControls } from './FamilyTreeControls'
 import { NodeContextMenu } from './NodeContextMenu'
+import { StatsPanel } from './controls/StatsPanel'
 import { getLayoutedElements, updateSharedChildEdges } from './utils/dagre-layout'
 import { toast } from 'sonner'
 import 'reactflow/dist/style.css'
@@ -579,13 +580,14 @@ export function FamilyTree({
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onInit={setRfInstance}
-        panOnDrag={isSpacePressed ? [1] : false}
-        nodesDraggable={!isSpacePressed && !readOnly}
+        panOnDrag={true}
+        nodesDraggable={!readOnly}
         onMiniMapClick={handleMiniMapClick}
         onNodeContextMenu={onNodeContextMenu}
         onPaneClick={onPaneClick}
         isLoading={isInitialLoading || isActionLoading}
         loadingLabel={canvasLoadingLabel}
+        statsPanel={<StatsPanel persons={persons} relationships={relationships} />}
         contextMenu={
           contextMenu && (
             <NodeContextMenu

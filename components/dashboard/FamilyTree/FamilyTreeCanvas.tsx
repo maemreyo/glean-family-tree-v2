@@ -50,6 +50,7 @@ interface FamilyTreeCanvasProps {
   loadingLabel?: string
   children?: React.ReactNode
   contextMenu?: React.ReactNode
+  statsPanel?: React.ReactNode
 }
 
 export function FamilyTreeCanvas({
@@ -71,6 +72,7 @@ export function FamilyTreeCanvas({
   loadingLabel,
   children,
   contextMenu,
+  statsPanel,
 }: FamilyTreeCanvasProps) {
   const shouldVirtualize = nodes.length >= 500
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -187,6 +189,7 @@ export function FamilyTreeCanvas({
         />
         <Background gap={12} size={1} />
         <Panel position="top-right">{children}</Panel>
+        <Panel position="top-left">{statsPanel}</Panel>
       </ReactFlow>
       {contextMenu}
     </div>

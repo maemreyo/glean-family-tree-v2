@@ -72,8 +72,8 @@ export function SpouseEdge({
           ...style,
           strokeWidth: 'var(--edge-spouse-width)',
           stroke: 'var(--relationship-spouse)',
-          strokeDasharray: 'var(--edge-spouse-dash)',
-          animation: 'dash 20s linear infinite',
+          strokeDasharray: '10 5',
+          animation: 'dash 1s linear infinite',
           strokeLinecap: 'round',
           strokeLinejoin: 'round',
         }}
@@ -91,7 +91,7 @@ export function SpouseEdge({
         className="overflow-visible"
         style={{ pointerEvents: 'none' }}
       >
-        <div className="flex items-center justify-center w-full h-full">
+        <div className="flex items-center justify-center w-full h-full animate-pulse">
           <div className="rounded-full p-1 border-2 shadow-sm bg-[color:var(--spouse-heart-bg)] border-[color:var(--spouse-heart-border)]">
             <Heart className="h-3 w-3 text-[color:var(--spouse-heart-icon)] fill-[color:var(--spouse-heart-icon)]" />
           </div>
